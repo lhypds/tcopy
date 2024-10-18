@@ -26,7 +26,7 @@ def watch_file(file_path):
     observer.start()
     try:
         while True:
-            time.sleep(1)
+            time.sleep(300)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
