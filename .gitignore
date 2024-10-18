@@ -1,2 +1,4 @@
 .env
 .venv
+*.txt
+node_modules

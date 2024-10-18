@@ -1,38 +1,35 @@
-import time
-import pyperclip
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from dotenv import load_dotenv
 import os
+import requests
+import pyperclip
+from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Get the file path from the environment variable
-FILE_PATH = os.getenv("STORE_PATH")
-
-class FileChangeHandler(FileSystemEventHandler):
-    def on_modified(self, event):
-        if event.src_path == FILE_PATH:
-            with open(event.src_path, 'r', encoding='utf-8') as file:
-                content = file.read()
-                pyperclip.copy(content)
-                print("Clipboard updated with new content from clipboard.txt")
-
-def watch_file(file_path):
-    event_handler = FileChangeHandler()
-    observer = Observer()
-    observer.schedule(event_handler, path=os.path.dirname(file_path), recursive=False)
-    observer.start()
+def fetch_and_copy_to_clipboard(url):
     try:
-        while True:
-            time.sleep(300)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        # Get the content of the response
+        content = response.text
+        
+        # Print content
+        print(content)
+
+        # Copy the content to the clipboard
+        pyperclip.copy(content)
+        print("Content copied to clipboard successfully.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching content from {url}: {e}")
+
 
 if __name__ == "__main__":
-    if FILE_PATH is not None:
-        watch_file(FILE_PATH)
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Get the URL from the STORE_URL environment variable
+    store_url = os.getenv('STORE_URL')
+
+    if store_url is None:
+        print("Error: STORE_URL not found in .env file")
     else:
-        print("Please set the STORE_PATH variable in your .env file.")
+        fetch_and_copy_to_clipboard(store_url)
