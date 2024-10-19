@@ -13,6 +13,13 @@ Simple text copier for copy text from one machine to another machine.
 ![image](https://github.com/user-attachments/assets/fec4f88d-1b45-4ab5-a0c4-ccebc0b77aa3)
 
 
+Dependencies
+------------
+
+Python 3  
+Node.js  
+
+
 Setup  
 -----
 
