@@ -14,8 +14,8 @@ Server mode store text cache on server, and use API to access.
 Setup
 -----
 
-`pip install -r requirements.txt` to install the dependencies.  
-`npm install` to install the dependencies for the server.  
+Run `pip install -r requirements.txt` to install the Python dependencies.  
+Run `npm install` to install the dependencies for the server.  
 
 
 File Mode
@@ -39,20 +39,26 @@ Use AutoHotKey or WinHotKey to trigger the sender.
 Server Mode
 -----------
 
-With this simple copier, you don't need to think about the clipboard.  
-Just press `Ctrl + C` to copy the content, `Shift + Alt + C` to send to server.  
-In another machine, use `Shift + Alt + V` to get the content, then `Ctrl + V` to paste.  
+It will use server to manage shared text and API to get or update shared text.  
+
+* Deployment setup 
+Set `PORT`. (optional)  
+Run `npm install` to install the dependencies for the server.  
+Run `node server.js` to start the server.  
 
 * Mode setup  
 Set `STORE_TYPE` to `server`.  
 Set `STORE_URL` to the URL of the server.  
 
 Sender (`txtsender.py`)  
-Automatically use the clipboard to get the content and send it to the server.  
+Automatically get the clipboard content and send it to the server.  3
+Use AutoHotKey or WinHotKey to trigger the sender.  
+(I use `Shift + Alt + C` to trigger the reciever).  
 
 Reciever (`txtreciever.py`)  
+Get the content from server with GET API, and save to clipboard.  
 Use AutoHotKey or WinHotKey to trigger the reciever.  
-(I use `Shift + Alt + C` to trigger the sender).  
+(I use `Shift + Alt + V` to trigger the reciever).  
 
 * Server API  
 
