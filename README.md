@@ -60,12 +60,12 @@ Set `PORT`. (optional)
 Run `npm install` to install the dependencies for the server.  
 Run `node server.js` to start the server.  
 
-* Mode setup  
+* Client setup  
 Set `STORE_TYPE` to `server`.  
 Set `STORE_URL` to the URL of the server.  
 
-* Modules  
-  
+* Modules
+
 1. Sender (`txtsender.py`)  
 Automatically get the clipboard content and send it to the server.  3
 Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
