@@ -3,6 +3,9 @@ txtcopier
 =========
 
 
+![image](https://github.com/user-attachments/assets/fec4f88d-1b45-4ab5-a0c4-ccebc0b77aa3)
+
+
 Setup
 -----
 
