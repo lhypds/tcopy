@@ -10,8 +10,8 @@ Setup
 `npm install` to install the dependencies for the server.  
 
 
-MODE 1. Simple Txt File Copier
-------------------------------
+File Mode
+---------
 
 It will use the txt file as a shared file between two computers.  
 2 computers must have access to the file.  
@@ -28,8 +28,8 @@ Use AutoHotKey or WinHotKey to trigger the sender.
 (I use `Shift + Alt + C` to trigger the sender).  
 
 
-MODE 2. Client / Server Copier
-------------------------------
+Server Mode
+-----------
 
 With this simple copier, you don't need to think about the clipboard.  
 Just press `Ctrl + C` to copy the content, `Shift + Alt + C` to send to server.  
