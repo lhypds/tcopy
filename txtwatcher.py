@@ -8,8 +8,8 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
-# Get the file path from the environment variable
-FILE_PATH = os.getenv("STORE_FILE")
+# Convert the FILE_PATH to an absolute path if it's not already
+FILE_PATH = os.path.abspath(os.getenv("STORE_FILE", ""))
 
 class FileChangeHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -17,22 +17,27 @@ class FileChangeHandler(FileSystemEventHandler):
             with open(event.src_path, 'r', encoding='utf-8') as file:
                 content = file.read()
                 pyperclip.copy(content)
-                print("Clipboard updated with new content from clipboard.txt")
+                print("Clipboard updated with new content from store.txt")
 
 def watch_file(file_path):
     event_handler = FileChangeHandler()
     observer = Observer()
-    observer.schedule(event_handler, path=os.path.dirname(file_path), recursive=False)
-    observer.start()
-    try:
-        while True:
-            time.sleep(300)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+    directory = os.path.dirname(file_path)
+    
+    if os.path.isdir(directory):
+        observer.schedule(event_handler, path=directory, recursive=False)
+        observer.start()
+        try:
+            while True:
+                time.sleep(300)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
+    else:
+        print(f"The directory for the file {file_path} does not exist. Please check the path.")
 
 if __name__ == "__main__":
-    if FILE_PATH is not None:
+    if FILE_PATH:
         if os.path.exists(FILE_PATH):
             watch_file(FILE_PATH)
         else:
