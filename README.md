@@ -38,7 +38,7 @@ Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.
 (I use `Shift + Alt + C` to trigger the `send.bat`).  
 
 2. Watcher  
-The `txtwatcher.py` will watch the file and copy the content to the OS clipboard.  
+The `txtwatcher.py` will watch and detect the file changes and copy the content to the OS clipboard automatically.  
 Run `start.bat` to start the watcher.  
 
 
