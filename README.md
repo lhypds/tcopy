@@ -31,7 +31,7 @@ File Mode
 ---------
 
 It will use the txt file as a shared file between two computers.  
-2 computers must have access to the file.  
+2 computers must both have access to the file.  
 
 * Mode setup  
 Set `STORE_TYPE` to `file`.  
@@ -53,8 +53,9 @@ Server Mode
 -----------
 
 It will use server to manage shared text and API to get or update shared text.  
+2 machine must both have access to the server.  
 
-* Deployment setup  
+* Server deployment setup  
 Set `PORT`. (optional)  
 Run `npm install` to install the dependencies for the server.  
 Run `node server.js` to start the server.  
