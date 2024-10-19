@@ -13,6 +13,13 @@ Simple text copier for copy text from one machine to another machine.
 ![image](https://github.com/user-attachments/assets/fec4f88d-1b45-4ab5-a0c4-ccebc0b77aa3)
 
 
+Dependencies
+------------
+
+Python 3  
+Node.js  
+
+
 Setup  
 -----
 
@@ -24,7 +31,7 @@ File Mode
 ---------
 
 It will use the txt file as a shared file between two computers.  
-2 computers must have access to the file.  
+2 computers must both have access to the file.  
 
 * Mode setup  
 Set `STORE_TYPE` to `file`.  
@@ -32,13 +39,13 @@ Set `STORE_FILE` to the path of the txt file.
 
 * Modules  
 
-1. Sernder  
-The `txtsender.py` will use OS clipboard and save the content to a file.  
+1. Sender  
+The `txtsender.py` will use OS clipboard and save the content to the file (the `STORE_FILE`).  
 Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
 (I use `Shift + Alt + C` to trigger the `send.bat`).  
 
 2. Watcher  
-The `txtwatcher.py` will watch the file and copy the content to the OS clipboard.  
+The `txtwatcher.py` will watch and detect the file changes and copy the content to the OS clipboard automatically.  
 Run `start.bat` to start the watcher.  
 
 
@@ -46,8 +53,9 @@ Server Mode
 -----------
 
 It will use server to manage shared text and API to get or update shared text.  
+2 machine must both have access to the server.  
 
-* Deployment setup  
+* Server deployment setup  
 Set `PORT`. (optional)  
 Run `npm install` to install the dependencies for the server.  
 Run `node server.js` to start the server.  
