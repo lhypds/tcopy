@@ -33,7 +33,7 @@ Set `STORE_FILE` to the path of the txt file.
 * Modules  
 
 1. Sender  
-The `txtsender.py` will use OS clipboard and save the content to a file.  
+The `txtsender.py` will use OS clipboard and save the content to the file (the `STORE_FILE`).  
 Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
 (I use `Shift + Alt + C` to trigger the `send.bat`).  
 
