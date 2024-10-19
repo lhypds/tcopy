@@ -28,12 +28,16 @@ It will use the txt file as a shared file between two computers.
 Set `STORE_TYPE` to `file`.  
 Set `STORE_FILE` to the path of the txt file.  
 
-The `txtsender.py` will use OS clipboard and save the content to a file.  
-The `txtwatcher.py` will watch the file and copy the content to the OS clipboard.  
+* Modules  
 
+1. Sernder
+The `txtsender.py` will use OS clipboard and save the content to a file.  
+Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
+(I use `Shift + Alt + C` to trigger the `send.bat`).  
+
+2. Watcher
+The `txtwatcher.py` will watch the file and copy the content to the OS clipboard.  
 Run `start.bat` to start the watcher.  
-Use AutoHotKey or WinHotKey to trigger the sender.  
-(I use `Shift + Alt + C` to trigger the sender).  
 
 
 Server Mode
@@ -50,15 +54,17 @@ Run `node server.js` to start the server.
 Set `STORE_TYPE` to `server`.  
 Set `STORE_URL` to the URL of the server.  
 
-Sender (`txtsender.py`)  
+* Modules
+  
+1. Sender (`txtsender.py`)  
 Automatically get the clipboard content and send it to the server.  3
-Use AutoHotKey or WinHotKey to trigger the sender.  
-(I use `Shift + Alt + C` to trigger the reciever).  
+Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
+(I use `Shift + Alt + C` to trigger the `send.bat`).  
 
-Reciever (`txtreciever.py`)  
+2. Reciever (`txtreciever.py`)  
 Get the content from server with GET API, and save to clipboard.  
-Use AutoHotKey or WinHotKey to trigger the reciever.  
-(I use `Shift + Alt + V` to trigger the reciever).  
+Use AutoHotKey or WinHotKey to trigger the `txtreciever.py` or `recieve.bat`.  
+(I use `Shift + Alt + V` to trigger the `recieve.bat`).  
 
 * Server API  
 
@@ -67,4 +73,13 @@ Server simply read the file and send the content as response.
 
 GET `/save`  
 The client will send the content as query parameter of a GET request to the server.  
-The server will save the content to a file.
+The server will save the content to a file.  
+
+
+Hotkey Setup
+------------
+
+Example:  
+
+<img src="https://github.com/user-attachments/assets/013468fa-7dca-4a9d-bfe5-2d16def43780" width="500">
+
