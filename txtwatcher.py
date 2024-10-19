@@ -33,6 +33,9 @@ def watch_file(file_path):
 
 if __name__ == "__main__":
     if FILE_PATH is not None:
-        watch_file(FILE_PATH)
+        if os.path.exists(FILE_PATH):
+            watch_file(FILE_PATH)
+        else:
+            print(f"The file at {FILE_PATH} does not exist. Please check the path.")
     else:
         print("Please set the STORE_FILE variable in your .env file.")
