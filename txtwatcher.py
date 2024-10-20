@@ -17,7 +17,7 @@ class FileChangeHandler(FileSystemEventHandler):
             with open(event.src_path, 'r', encoding='utf-8') as file:
                 content = file.read()
                 pyperclip.copy(content)
-                print("Clipboard updated with new content from store.txt")
+                print("Clipboard updated with new content.")
 
 def watch_file(file_path):
     event_handler = FileChangeHandler()
