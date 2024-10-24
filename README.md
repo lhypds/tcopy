@@ -28,9 +28,9 @@ Run `npm install` to install the dependencies for the server.
 
 * Line ending
 In `.env` file set the line ending. (`LINE_ENDING_SAVING`).  
-`\n` for Unix/Linux. (LF, line feed)  
-`\r\n` for Windows style. (CRLF, carriage return and line feed)  
-`\r` for macOS style. (CR, carriage return)  
+`LF` for Unix/Linux. (LF, line feed)  
+`CRLF` for Windows style. (CRLF, carriage return and line feed)  
+`CR` for macOS style. (CR, carriage return)  
 
 
 File Mode  
