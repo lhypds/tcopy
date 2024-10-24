@@ -10,14 +10,17 @@ load_dotenv()
 
 # Convert the FILE_PATH to an absolute path if it's not already
 FILE_PATH = os.path.abspath(os.getenv("STORE_FILE", ""))
+LINE_ENDING = os.getenv("LINE_ENDING", "\n")
 
 class FileChangeHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path == FILE_PATH:
             with open(event.src_path, 'r', encoding='utf-8') as file:
                 content = file.read()
+                
                 # Normalize line endings to Unix style
-                content = content.replace('\r\n', '\n').replace('\r', '\n')
+                content = content.replace('\r\n', '\n').replace('\r', '\n').replace('\n', LINE_ENDING)
+                
                 pyperclip.copy(content)
                 print("Clipboard updated with new content.")
 

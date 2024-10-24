@@ -3,6 +3,10 @@ import requests
 import pyperclip
 from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
+LINE_ENDING = os.getenv("LINE_ENDING", "\n")
+
 def fetch_and_copy_to_clipboard(url):
     try:
         response = requests.get(url)
@@ -14,8 +18,8 @@ def fetch_and_copy_to_clipboard(url):
         # Print content
         print(content)
 
-        # Normalize line endings to Unix style
-        content = content.replace('\r\n', '\n').replace('\r', '\n')
+        # Normalize line endings to the specified LINE_ENDING
+        content = content.replace('\r\n', '\n').replace('\r', '\n').replace('\n', LINE_ENDING)
 
         # Copy the content to the clipboard
         pyperclip.copy(content)
