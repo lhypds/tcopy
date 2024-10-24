@@ -17,6 +17,7 @@ def write_clipboard_to_file(file_path):
     # Get the current clipboard content
     clipboard_content = pyperclip.paste()
 
+    # Set the desired line ending based on the environment variable
     line_ending = '\r\n'
     if line_ending_saving == "CRLF":
         line_ending = '\r\n'
@@ -31,8 +32,8 @@ def write_clipboard_to_file(file_path):
     clipboard_content = clipboard_content.replace('\r\n', '\n').replace('\r', '\n')
     clipboard_content = clipboard_content.replace('\n', line_ending)
 
-    # Write the clipboard content to the file
-    with open(file_path, 'w', encoding='utf-8') as file:
+    # Write the clipboard content to the file with the correct line ending
+    with open(file_path, 'w', encoding='utf-8', newline='') as file:
         file.write(clipboard_content)
         print(f"Clipboard content written to {file_path}")
 
