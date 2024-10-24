@@ -16,6 +16,8 @@ class FileChangeHandler(FileSystemEventHandler):
         if event.src_path == FILE_PATH:
             with open(event.src_path, 'r', encoding='utf-8') as file:
                 content = file.read()
+                # Normalize line endings to Unix style
+                content = content.replace('\r\n', '\n').replace('\r', '\n')
                 pyperclip.copy(content)
                 print("Clipboard updated with new content.")
 

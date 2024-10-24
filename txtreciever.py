@@ -14,6 +14,9 @@ def fetch_and_copy_to_clipboard(url):
         # Print content
         print(content)
 
+        # Normalize line endings to Unix style
+        content = content.replace('\r\n', '\n').replace('\r', '\n')
+
         # Copy the content to the clipboard
         pyperclip.copy(content)
         print("Content copied to clipboard successfully.")
