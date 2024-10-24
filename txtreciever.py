@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-LINE_ENDING = os.getenv("LINE_ENDING", "\n")
+LINE_ENDING = os.getenv("LINE_ENDING_GETTING", "\n")
 
 def fetch_and_copy_to_clipboard(url):
     try:

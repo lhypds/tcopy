@@ -38,7 +38,7 @@ if __name__ == "__main__":
     store_type = os.getenv('STORE_TYPE')
     store_file = os.getenv('STORE_FILE')
     store_url = os.getenv('STORE_URL')
-    line_ending = os.getenv('LINE_ENDING', '\n')  # Default to Unix-style if not set
+    line_ending = os.getenv('LINE_ENDING_SAVING', '\n')  # Default to Unix-style if not set
 
     if store_type is None:
         print("Error: STORE_TYPE not found in .env file")

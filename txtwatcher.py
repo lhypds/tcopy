@@ -10,7 +10,7 @@ load_dotenv()
 
 # Convert the FILE_PATH to an absolute path if it's not already
 FILE_PATH = os.path.abspath(os.getenv("STORE_FILE", ""))
-LINE_ENDING = os.getenv("LINE_ENDING", "\n")
+LINE_ENDING = os.getenv("LINE_ENDING_GETTING", "\n")
 
 class FileChangeHandler(FileSystemEventHandler):
     def on_modified(self, event):
