@@ -10,22 +10,22 @@ load_dotenv()
 store_type = os.getenv('STORE_TYPE')
 store_file = os.getenv('STORE_FILE')
 store_url = os.getenv('STORE_URL')
-line_ending = os.getenv('LINE_ENDING_SAVING', "CRLF")  # Default to Unix-style if not set
+line_ending_saving = os.getenv('LINE_ENDING_SAVING', "CRLF")  # Default to Unix-style if not set
 
 
 def write_clipboard_to_file(file_path):
     # Get the current clipboard content
     clipboard_content = pyperclip.paste()
 
-    if line_ending == "CRLF":
+    line_ending = '\r\n'
+    if line_ending_saving == "CRLF":
         line_ending = '\r\n'
-    elif line_ending == "LF":
+    elif line_ending_saving == "LF":
         line_ending = '\n'
-    elif line_ending == "CR":
+    elif line_ending_saving == "CR":
         line_ending = '\r'
     else:
         print(f"Error: Invalid LINE_ENDING_SAVING value: {line_ending}. Defaulting to CRLF.")
-        line_ending = '\r\n'
 
     # Normalize line endings in the clipboard content
     clipboard_content = clipboard_content.replace('\r\n', '\n').replace('\r', '\n')
