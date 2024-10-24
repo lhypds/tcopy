@@ -3,9 +3,29 @@ import os
 import requests
 from dotenv import load_dotenv
 
-def write_clipboard_to_file(file_path, line_ending):
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the storage type and relevant paths/URLs from environment variables
+store_type = os.getenv('STORE_TYPE')
+store_file = os.getenv('STORE_FILE')
+store_url = os.getenv('STORE_URL')
+line_ending = os.getenv('LINE_ENDING_SAVING', "CRLF")  # Default to Unix-style if not set
+
+
+def write_clipboard_to_file(file_path):
     # Get the current clipboard content
     clipboard_content = pyperclip.paste()
+
+    if line_ending == "CRLF":
+        line_ending = '\r\n'
+    elif line_ending == "LF":
+        line_ending = '\n'
+    elif line_ending == "CR":
+        line_ending = '\r'
+    else:
+        print(f"Error: Invalid LINE_ENDING_SAVING value: {line_ending}. Defaulting to CRLF.")
+        line_ending = '\r\n'
 
     # Normalize line endings in the clipboard content
     clipboard_content = clipboard_content.replace('\r\n', '\n').replace('\r', '\n')
@@ -31,20 +51,11 @@ def send_clipboard_content_to_server(url):
 
 
 if __name__ == "__main__":
-    # Load environment variables from .env file
-    load_dotenv()
-
-    # Get the storage type and relevant paths/URLs from environment variables
-    store_type = os.getenv('STORE_TYPE')
-    store_file = os.getenv('STORE_FILE')
-    store_url = os.getenv('STORE_URL')
-    line_ending = os.getenv('LINE_ENDING_SAVING', '\n')  # Default to Unix-style if not set
-
     if store_type is None:
         print("Error: STORE_TYPE not found in .env file")
     elif store_type == 'file':
         if store_file is not None:
-            write_clipboard_to_file(store_file, line_ending)
+            write_clipboard_to_file(store_file)
         else:
             print("Error: STORE_FILE not found in .env file")
     elif store_type == 'server':
