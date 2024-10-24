@@ -3,9 +3,13 @@ import os
 import requests
 from dotenv import load_dotenv
 
-def write_clipboard_to_file(file_path):
+def write_clipboard_to_file(file_path, line_ending):
     # Get the current clipboard content
     clipboard_content = pyperclip.paste()
+
+    # Normalize line endings in the clipboard content
+    clipboard_content = clipboard_content.replace('\r\n', '\n').replace('\r', '\n')
+    clipboard_content = clipboard_content.replace('\n', line_ending)
 
     # Write the clipboard content to the file
     with open(file_path, 'w', encoding='utf-8') as file:
@@ -34,17 +38,18 @@ if __name__ == "__main__":
     store_type = os.getenv('STORE_TYPE')
     store_file = os.getenv('STORE_FILE')
     store_url = os.getenv('STORE_URL')
+    line_ending = os.getenv('LINE_ENDING', '\n')  # Default to Unix-style if not set
 
     if store_type is None:
         print("Error: STORE_TYPE not found in .env file")
     elif store_type == 'file':
         if store_file is not None:
-            write_clipboard_to_file(store_file)
+            write_clipboard_to_file(store_file, line_ending)
         else:
             print("Error: STORE_FILE not found in .env file")
     elif store_type == 'server':
         if store_url is not None:
-            send_clipboard_content_to_server(store_url + "/save")  # endpont is /save
+            send_clipboard_content_to_server(store_url + "/save")
         else:
             print("Error: STORE_URL not found in .env file")
     else:
