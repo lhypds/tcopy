@@ -19,8 +19,8 @@ class FileChangeHandler(FileSystemEventHandler):
                 content = file.read()
                 
                 pyperclip.copy(content)
-                time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(f"{time} - update recieved, content:")
+                timeString = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(f"{timeString} - update recieved, content:")
                 print(content)
 
 def watch_file(file_path):
