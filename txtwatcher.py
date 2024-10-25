@@ -13,14 +13,21 @@ load_dotenv()
 FILE_PATH = os.path.abspath(os.getenv("STORE_FILE", ""))
 
 class FileChangeHandler(FileSystemEventHandler):
+    last_modified = 0
+
     def on_modified(self, event):
         if event.src_path == FILE_PATH:
+            current_time = time.time()
+            if current_time - self.last_modified < 3:  # 3 seconds debounce
+                return
+            self.last_modified = current_time
+
             with open(event.src_path, 'r', encoding='utf-8') as file:
                 content = file.read()
-                
+
                 pyperclip.copy(content)
                 timeString = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(f"{timeString} - update recieved, content:")
+                print(f"{timeString} - update received, content:")
                 print(content)
 
 def watch_file(file_path):
