@@ -18,7 +18,9 @@ class FileChangeHandler(FileSystemEventHandler):
                 content = file.read()
                 
                 pyperclip.copy(content)
-                print("Clipboard updated with new content.")
+                time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(f"{time} - update recieved, content:")
+                print(content)
 
 def watch_file(file_path):
     event_handler = FileChangeHandler()
