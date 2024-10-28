@@ -22,6 +22,9 @@ class FileChangeHandler(FileSystemEventHandler):
                 return
             self.last_modified = current_time
 
+            # Wait for the file to be written to
+            time.sleep(1)
+            
             with open(event.src_path, 'r', encoding='utf-8') as file:
                 content = file.read()
 
