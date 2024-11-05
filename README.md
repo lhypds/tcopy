@@ -32,6 +32,11 @@ In `.env` file set the line ending. (`LINE_ENDING_SAVING`).
 `CRLF` for Windows style. (CRLF, carriage return and line feed)  
 `CR` for macOS style. (CR, carriage return)  
 
+* Keyboard Maestro (macOS)  
+Create new action with shortcut, for example "Command + Shift + V".  
+Trigger a "Execute Shell Script"  
+Example: `cd /Users/username/code/txtcopier && /Users/username/.pyenv/shims/python txtreciever.py`  
+
 
 File Mode  
 ---------
