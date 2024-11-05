@@ -17,7 +17,7 @@ app.get('/save', (req, res) => {
     // Log the received text input to the console
     console.log(`Received text: ${textInput}`);
 
-    fs.writeFile(outputFile, textInput + '\n', (err) => {
+    fs.writeFile(outputFile, textInput, (err) => {
       if (err) {
         res.status(500).send('Error saving the text');
       } else {

@@ -40,10 +40,14 @@ def write_clipboard_to_file(file_path):
 
 def send_clipboard_content_to_server(url):
     # Get the current clipboard content
-    clipboard_content = pyperclip.paste()
+    content = pyperclip.paste()
+    
+    # Print content
+    content_replaced = content.replace('\n', "<LF>").replace('\r', "<CR>").replace('\t', "<TAB>").replace(' ', "<SPACE>")
+    print(content_replaced)
 
     # Send the clipboard content using a GET request with a query parameter
-    response = requests.get(url, params={'text': clipboard_content})
+    response = requests.get(url, params={'text': content})
     
     if response.status_code == 200:
         print(f"Clipboard content sent to {url}")
