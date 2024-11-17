@@ -38,6 +38,19 @@ Trigger a "Execute Shell Script"
 Example: `cd /Users/username/code/txtcopier && /Users/username/.pyenv/shims/python txtreciever.py`  
 
 
+Linux CLI Support
+-----------------
+
+In Linux.  
+Use `./install` to install and use command `tcopy` to execute.  
+Use `./uninstall` to uninstall it.  
+
+`tcopy` examples:  
+`tcopy aaa`  
+`tcopy -f filename.txt`  
+`echo aaa | tcopy`  
+
+
 File Mode  
 ---------
 
