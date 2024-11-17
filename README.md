@@ -7,7 +7,7 @@ Simple text copier for copy text from one machine to another machine.
 
 2 modes are providered:
 1. File mode use a file as text cache.  
-2. Server mode store text cache on server, and use API to access.  
+2. Server mode store text cache on server, and use API to save or get the content.  
 
 
 ![image](https://github.com/user-attachments/assets/fec4f88d-1b45-4ab5-a0c4-ccebc0b77aa3)
