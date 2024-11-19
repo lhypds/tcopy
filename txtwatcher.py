@@ -57,24 +57,42 @@ class FileChangeHandler(FileSystemEventHandler):
 
 
 def watch_file(file_path):
-    event_handler = FileChangeHandler()
-    observer = Observer()
     directory = os.path.dirname(file_path)
 
-    if os.path.isdir(directory):
-        observer.schedule(event_handler, path=directory, recursive=False)
-        observer.start()
-        print(f"Start watching file `{file_path}` for changes...")
-        try:
-            while True:
-                time.sleep(300)
-        except KeyboardInterrupt:
+    while True:
+        # Check if the directory exists
+        if os.path.isdir(directory):
+            event_handler = FileChangeHandler()
+            observer = Observer()
+            observer.schedule(event_handler, path=directory, recursive=False)
+            observer.start()
+            logging.info(f"Start watching file `{file_path}` for changes...")
+            try:
+                # Loop to keep the script running
+                while os.path.exists(file_path):
+                    time.sleep(1)  # Sleep for a short period to prevent busy waiting
+            except KeyboardInterrupt:
+                observer.stop()
+                break
+
             observer.stop()
-        observer.join()
-    else:
-        logging.error(
-            f"The directory for the file {file_path} does not exist. Please check the path."
-        )
+            observer.join()
+            logging.info(
+                f"Stopped watching file `{file_path}` because it no longer exists."
+            )
+
+            # Wait for the file or directory to become accessible again
+            while not os.path.exists(file_path):
+                time.sleep(1)  # Check every second
+
+            logging.info(
+                f"File `{file_path}` is now accessible again. Restarting watcher..."
+            )
+        else:
+            logging.error(
+                f"The directory for the file {file_path} does not exist. Please check the path."
+            )
+            break  # Exit the loop if the directory itself doesn't exist
 
 
 if __name__ == "__main__":
