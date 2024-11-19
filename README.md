@@ -110,6 +110,28 @@ The client will send the content as query parameter of a GET request to the serv
 The server will save the content to a file.  
 
 
+.env
+----
+
+* STORE_TYPE  
+`file` or `server` mode setup.  
+
+* STORE_FILE  
+Local store file name.  
+Example: `store.txt`  
+
+* STORE_URL  
+Remote server URL.  
+
+* PORT  
+Server port number for `server.js`.    
+
+* LINE_ENDING_SAVING  
+Line ending for saving.  
+Use `LF`, `CRLF` or `CR`.  
+
+
+
 Hotkey Setup
 ------------
 
