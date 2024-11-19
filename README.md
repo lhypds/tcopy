@@ -127,6 +127,7 @@ Example: `store.txt`
 
 * STORE_URL  
 Remote server URL.  
+Example: `https://tcopy.abc.com`  
 
 * PORT  
 Server port number for `server.js`.    
