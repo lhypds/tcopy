@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO)
 
 class FileChangeHandler(FileSystemEventHandler):
     last_modified = 0
+    file_inaccessible = False
 
     def on_modified(self, event):
         if event.src_path == FILE_PATH:
@@ -31,6 +32,11 @@ class FileChangeHandler(FileSystemEventHandler):
 
             # Check if the file exists before opening
             if os.path.exists(event.src_path):
+                if self.file_inaccessible:
+                    logging.info(f"File {event.src_path} is now accessible.")
+                    self.file_inaccessible = False
+                    return
+
                 try:
                     with open(event.src_path, "r", encoding="utf-8") as file:
                         content = file.read()
@@ -47,6 +53,7 @@ class FileChangeHandler(FileSystemEventHandler):
                     )
             else:
                 logging.error(f"File {event.src_path} does not exist at the moment.")
+                self.file_inaccessible = True
 
 
 def watch_file(file_path):
