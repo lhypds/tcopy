@@ -47,10 +47,11 @@ Linux CLI Support
 -----------------
 
 In Linux.  
+Use `chmod +x install.sh uninstall.sh tcopy.sh` to add executable permission.  
 Use `./install` to install and use command `tcopy` to execute.  
 Use `./uninstall` to uninstall it.  
 
-`tcopy` examples:  
+`tcopy` command examples:  
 `tcopy aaa`  
 `tcopy -f filename.txt`  
 `echo aaa | tcopy`  
