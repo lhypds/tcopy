@@ -19,7 +19,7 @@ send_request() {
   echo "Sending request with text:\n$text"
 
   # Print the curl command
-  echo "Executing: curl -G --data-urlencode \"text=${text}\" \"${STORE_URL}/save\""
+  echo "Executing: curl ..."
 
   # Execute the curl command directly
   curl -G --data-urlencode "text=${text}" "${STORE_URL}/save"
