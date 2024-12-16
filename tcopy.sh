@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Load the STORE_URL from the .env file and trim any whitespace
-STORE_URL=$(grep -oP '(?<=STORE_URL=).*' .env | tr -d '[:space:]')
+# Get the directory where the script is located
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
+# Load the STORE_URL from the .env file located in the same directory as the script
+STORE_URL=$(grep -oP '(?<=STORE_URL=).*' "$SCRIPT_DIR/.env" | tr -d '[:space:]')
 
 # Check if STORE_URL is defined
 if [ -z "$STORE_URL" ]; then
@@ -17,7 +20,7 @@ send_request() {
 
   # Print the curl command
   echo "Executing: curl -G --data-urlencode \"text=${text}\" \"${STORE_URL}/save\""
-  
+
   # Execute the curl command directly
   curl -G --data-urlencode "text=${text}" "${STORE_URL}/save"
   echo ""
