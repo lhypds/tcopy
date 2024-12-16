@@ -16,7 +16,7 @@ echo "Store URL: $STORE_URL"
 # Function to send GET request
 send_request() {
   local text="$1"
-  echo "Sending request with text: $text"
+  echo "Sending request with text:\n$text"
 
   # Print the curl command
   echo "Executing: curl -G --data-urlencode \"text=${text}\" \"${STORE_URL}/save\""
