@@ -5,7 +5,7 @@ txtcopier
 
 txtcopier, or tcopy, is a simple text copier for copy text from one machine to another machine.  
 
-Two modes are providered:
+Two modes are provided:
 1. File mode use a file as text cache.  
 2. Server mode store text cache on server, and use API to save or get the content.  
 
