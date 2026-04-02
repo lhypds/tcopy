@@ -1,9 +1,9 @@
 
-txtcopier
-=========
+tcopy
+=====
 
 
-txtcopier, or tcopy, is a simple text copier for copy text from one machine to another machine.  
+`tcopy`, is a simple text copier for copy text from one machine to another machine.  
 
 Two modes are provided:
 1. File mode, use a file as text cache.  
@@ -40,7 +40,7 @@ In `.env` file set the line ending. (`LINE_ENDING_SAVING`).
 * Keyboard Maestro (macOS)  
 Create new action with shortcut, for example "Command + Shift + V".  
 Trigger a "Execute Shell Script"  
-Example: `cd /Users/username/code/txtcopier && /Users/username/.pyenv/shims/python txtreciever.py`  
+Example: `cd /Users/username/code/tcopy && /Users/username/.pyenv/shims/python txtreciever.py`  
 
 
 Linux CLI Support
@@ -88,7 +88,7 @@ It will use server to manage shared text and API to get or update shared text.
 * Server deployment setup  
 Set `PORT`. (optional)  
 Run `npm install` to install the dependencies for the server.  
-Run `node server.js` to start the server.  
+Run `node serve.js` to start the server.  
 
 * Client setup  
 Set `STORE_TYPE` to `server`.  
@@ -131,7 +131,7 @@ Remote server URL.
 Example: `https://tcopy.abc.com`  
 
 * PORT  
-Server port number for `server.js`.    
+Server port number for `serve.js`.    
 
 * LINE_ENDING_SAVING  
 Line ending for saving.  

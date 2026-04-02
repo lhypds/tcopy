@@ -1,9 +1,10 @@
 {
-  "name": "txtcopier",
+  "name": "tcopy",
   "version": "1.0.0",
-  "description": "save GET requret parameter to a file.",
-  "main": "server.js",
+  "description": "Copy and paste from any machine to any machine.",
+  "main": "serve.js",
   "scripts": {
+    "start": "node serve.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
