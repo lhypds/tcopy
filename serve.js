@@ -17,6 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Route to replace text input in a file
+// Input is JSON, for example: { "text": "Hello, World!" }
 app.post('/', (req, res) => {
   const textInput = req.body && req.body.text;
   if (textInput) {
@@ -27,7 +28,7 @@ app.post('/', (req, res) => {
       if (err) {
         res.status(500).send('Error saving the text');
       } else {
-        res.send('Saved: ' + textInput);
+        res.send('Text saved: `' + textInput + '`');
       }
     });
   } else {
