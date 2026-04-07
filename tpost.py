@@ -15,11 +15,12 @@ def post_content_to_server(url, content=None):
     content_replaced = content.replace("\n", "<LF>").replace("\r", "<CR>").replace("\t", "<TAB>").replace(" ", "<SPACE>")
     print(f"Content: {content_replaced}")
 
+    print(f"Sending POST request to `{url}`.")
     response = requests.post(url, json={"text": content_replaced})
     print(f"Server response: {response.text}")
 
     if response.status_code == 200:
-        print(f"Clipboard content sent to {url}")
+        print(f"Clipboard content sent successfully.")
     else:
         print(f"Failed to send clipboard content. Status code: {response.status_code}")
 
