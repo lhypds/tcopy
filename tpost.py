@@ -34,4 +34,4 @@ if __name__ == "__main__":
         print("Error: STORE not found in .env file")
     else:
         content = " ".join(args.content).strip() if args.content else None
-        post_content_to_server(url + "/save", content)
+        post_content_to_server(url, content)
