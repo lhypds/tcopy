@@ -23,7 +23,13 @@ For server mode, use `tfetch.py` to get the text from server before paste.
 How It Works
 ------------
 
-![image](https://github.com/user-attachments/assets/fec4f88d-1b45-4ab5-a0c4-ccebc0b77aa3)
+Server mode:  
+Local PC clipboard ---  `tpost.py`  --> Server (`clipboard.txt`)  
+Local PC clipboard <--  `tfetch.py` --- Server (`clipboard.txt`)  
+
+File mode:  
+Local PC clipboard ---  `twrite.py`  --> Shared file (`store.txt`)  
+Local PC clipboard <--  `twatch.py`  --- Shared file (`store.txt`)  
 
 * Dependencies  
 Python 3  
@@ -35,7 +41,7 @@ Setup
 
 Run `pip install -r requirements.txt` to install the Python dependencies.  
 Run `npm install` to install the dependencies for the server.  
-Setup `.env` file. (see the `.env` section below)
+Setup `.env` file. (see the `.env` section below)  
 
 
 Shortcut Setup
@@ -46,7 +52,7 @@ Create new action with a custom shortcut.
 Trigger a "Execute Shell Script"  
 Example: `cd /Users/username/code/tcopy && /Users/username/.pyenv/shims/python tfetch.py`  
 
-* WinHotKey (Windows)
+* WinHotKey (Windows)  
 <img src="https://github.com/user-attachments/assets/013468fa-7dca-4a9d-bfe5-2d16def43780" width="500">
 
 
@@ -71,15 +77,16 @@ It will use the txt file as a shared file between two computers.
 2 computers must both have access to the file.  
 
 * Mode setup  
-Set `STORE_TYPE` to `file`.  
-Set `STORE_FILE` to the path of the txt file.  
+Set `MODE` to `file`.  
+Set `STORE` to the path of the txt file.  
 
 * Modules  
 
 1. Sender  
-The `tsend.py` will use OS clipboard and save the content to the file (the `STORE_FILE`).  
-Use AutoHotKey or WinHotKey to trigger the `tsend.py`.  
-(I use `Shift + Alt + C` to trigger the `tsend.py`).  
+The `twrite.py` will use OS clipboard and save the content to the file (the `STORE`).  
+Use AutoHotKey or WinHotKey to trigger the `twrite.py`.  
+(I use `Shift + Alt + C` to trigger the `twrite.py`).  
+You can also pass content directly: `python twrite.py "hello world"`.  
 
 2. Watcher  
 The `twatch.py` will watch and detect the file changes and copy the content to the OS clipboard automatically.  
@@ -97,15 +104,16 @@ Run `npm install` to install the dependencies for the server.
 Run `node serve.js` to start the server.  
 
 * Client setup  
-Set `STORE_TYPE` to `server`.  
-Set `STORE_URL` to the URL of the server.  
+Set `MODE` to `server`.  
+Set `STORE` to the URL of the server.  
 
 * Modules
 
-1. Sender (`tsend.py`)  
-Automatically get the clipboard content and send it to the server.  3
-Use AutoHotKey or WinHotKey to trigger the `tsend.py`.  
-(I use `Shift + Alt + C` to trigger the `tsend.py`).  
+1. Sender (`tpost.py`)  
+Get the clipboard content and send it to the server.  
+Use AutoHotKey or WinHotKey to trigger the `tpost.py`.  
+(I use `Shift + Alt + C` to trigger the `tpost.py`).  
+You can also pass content directly: `python tpost.py "hello world"`.  
 
 2. Fetcher (`tfetch.py`)  
 Get the content from server with GET API, and save to clipboard.  
@@ -117,31 +125,32 @@ Use AutoHotKey or WinHotKey to trigger the `tfetch.py`.
 GET `/`  
 Server simply read the file and send the content as response.  
 
-GET `/save`  
-The client will send the content as query parameter of a GET request to the server.  
+POST `/save`  
+The client will send the content in request body to the server.  
 The server will save the content to a file.  
 
 
 .env
 ----
 
-* STORE_TYPE  
+MODE  
 `file` or `server` mode setup.  
 
-* STORE_FILE  
+STORE  
 Local store file name.  
 Example: `store.txt`  
-
-* STORE_URL  
 Remote server URL.  
 Example: `https://tcopy.abc.com`  
 
-* PORT  
-Server port number for `serve.js`.    
-
-* LINE_ENDING_SAVING  
+LINE_ENDING_SAVING  
 Line ending for saving.  
 Use `LF`, `CRLF` or `CR`.  
 `LF` for Unix/Linux. (LF, line feed)  
 `CRLF` for Windows style. (CRLF, carriage return and line feed)  
 `CR` for macOS style. (CR, carriage return)  
+
+PORT  
+Server port number for `serve.js`.    
+
+PM2_NAME  
+PM2 process name.  

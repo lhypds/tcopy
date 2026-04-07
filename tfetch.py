@@ -30,10 +30,10 @@ if __name__ == "__main__":
     # Load environment variables from .env file
     load_dotenv()
 
-    # Get the URL from the STORE_URL environment variable
-    store_url = os.getenv('STORE_URL')
+    # Get the URL from the STORE environment variable
+    store = os.getenv('STORE')
 
-    if store_url is None:
-        print("Error: STORE_URL not found in .env file")
+    if store is None:
+        print("Error: STORE not found in .env file")
     else:
-        fetch_and_copy_to_clipboard(store_url)
+        fetch_and_copy_to_clipboard(store)

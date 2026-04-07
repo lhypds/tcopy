@@ -6,11 +6,12 @@ from dotenv import load_dotenv
 import os
 import logging
 
+
 # Load environment variables from .env file
 load_dotenv()
 
 # Convert the FILE_PATH to an absolute path if it's not already
-FILE_PATH = os.path.abspath(os.getenv("STORE_FILE", ""))
+FILE_PATH = os.path.abspath(os.getenv("STORE", ""))
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -104,4 +105,4 @@ if __name__ == "__main__":
                 f"The file at {FILE_PATH} does not exist. Please check the path."
             )
     else:
-        logging.error("Please set the STORE_FILE variable in your .env file.")
+        logging.error("Please set the STORE variable in your .env file.")
