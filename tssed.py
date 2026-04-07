@@ -22,7 +22,7 @@ def connect_and_watch_events(url):
 
             last_heartbeat = time.time()
 
-            for line in response.iter_lines(chunk_size=1, decode_unicode=True):
+            for line in response.iter_lines():
                 if not line:
                     continue
 
