@@ -1,7 +1,6 @@
 const express = require('express');
 const fs = require('fs');
 const dotenv = require('dotenv');
-const { fileWatcher } = require('./utils/fileUtils');
 const app = express();
 
 // Load environment variables from .env file
@@ -10,9 +9,45 @@ dotenv.config();
 const port = process.env.PORT || 5460;
 const outputFile = 'clipboard.txt';
 const watchInterval = 300;
+const heartbeatIntervalMs = 60 * 1000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const fileWatcher = (filePath, interval = 300) => (req, res) => {
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '', 'utf8');
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const sendFileContent = () => {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        return;
+      }
+
+      res.write(`data: ${JSON.stringify({ text: data || '', timestamp: new Date().toISOString() })}\n\n`);
+    });
+  };
+
+  sendFileContent();
+  const watcher = (curr, prev) => {
+    if (curr.mtimeMs !== prev.mtimeMs || curr.size !== prev.size) {
+      sendFileContent();
+    }
+  };
+
+  fs.watchFile(filePath, { interval }, watcher);
+  req.on('close', () => {
+    fs.unwatchFile(filePath, watcher);
+    res.end();
+  });
+};
+const watchFileEvents = fileWatcher(outputFile, watchInterval);
 
 // Route to replace text input in a file
 // Input is JSON, for example: { "text": "Hello, World!" }
@@ -50,7 +85,19 @@ app.get('/', (req, res) => {
 });
 
 // Route for Server-Sent Events to watch file changes
-app.get('/events', fileWatcher(outputFile, watchInterval));
+app.get('/events', (req, res) => {
+  const heartbeatTimer = setInterval(() => {
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ text: '###ALIVE###', timestamp: new Date().toISOString() })}\n\n`);
+    }
+  }, heartbeatIntervalMs);
+
+  req.on('close', () => {
+    clearInterval(heartbeatTimer);
+  });
+
+  watchFileEvents(req, res);
+});
 
 app.listen(port, () => {
   if (!fs.existsSync(outputFile)) {
