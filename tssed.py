@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HEARTBEAT_TIMEOUT_SECONDS = 5 * 60
+HEARTBEAT_TIMEOUT_SECONDS = 3 * 60
 
 
 def connect_and_watch_events(url):
