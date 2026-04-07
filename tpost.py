@@ -13,7 +13,7 @@ def post_content_to_server(url, content=None):
         content = pyperclip.paste()
 
     content_replaced = content.replace("\n", "<LF>").replace("\r", "<CR>").replace("\t", "<TAB>").replace(" ", "<SPACE>")
-    print(f"Content: {content_replaced}")
+    print(f"Send content: `{content_replaced}`")
 
     print(f"Sending POST request to `{url}`.")
     response = requests.post(url, json={"text": content_replaced})

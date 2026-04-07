@@ -16,7 +16,7 @@ def fetch_and_copy_to_clipboard(url):
         
         # Print content
         content_replaced = content.replace('\n', "<LF>").replace('\r', "<CR>").replace('\t', "<TAB>").replace(' ', "<SPACE>")
-        print(content_replaced)
+        print(f"Fetched content: `{content_replaced}`")
 
         # Copy the content to the clipboard
         pyperclip.copy(content)
