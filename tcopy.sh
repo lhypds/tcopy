@@ -13,7 +13,7 @@ if [ -z "$STORE_URL" ]; then
 fi
 echo "Store URL: $STORE_URL"
 
-# Function to send GET request
+# Function to send POST request
 send_request() {
   local text="$1"
   echo "Sending request with text:\n$text"
