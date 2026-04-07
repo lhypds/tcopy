@@ -99,7 +99,9 @@ app.get('/events', (req, res) => {
   watchFileEvents(req, res);
 });
 
+// Start the server
 app.listen(port, () => {
+  // Ensure the output file exists
   if (!fs.existsSync(outputFile)) {
     console.log(`Output file "${outputFile}" does not exist. Creating it.`);
     fs.writeFileSync(outputFile, '', 'utf8');
