@@ -17,7 +17,7 @@ def post_content_to_server(url, content=None):
 
     print(f"Sending POST request to `{url}`.")
     response = requests.post(url, json={"text": content_replaced})
-    print(f"Server response: {response.text}")
+    print(f"Server response: `{response.text}`")
 
     if response.status_code == 200:
         print(f"Clipboard content sent successfully.")
