@@ -18,11 +18,18 @@ send_request() {
   local text="$1"
   echo "Sending request with text:\n$text"
 
+  # Build a JSON payload safely (handles quotes/newlines)
+  local json_payload
+  json_payload=$(printf '%s' "$text" | python3 -c 'import json,sys; print(json.dumps({"text": sys.stdin.read()}))')
+
   # Print the curl command
-  echo "Executing: curl ..."
+  echo "Executing: curl -X POST ..."
 
   # Execute the curl command directly
-  curl -G --data-urlencode "text=${text}" "${STORE_URL}"
+  curl -X POST \
+    -H "Content-Type: application/json" \
+    --data "$json_payload" \
+    "${STORE_URL}"
   echo ""
 }
 
