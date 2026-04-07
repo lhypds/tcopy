@@ -8,6 +8,7 @@ load_dotenv()
 
 def fetch_and_copy_to_clipboard(url):
     try:
+        print(f"Fetching content from `{url}`.")
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for HTTP errors
 
