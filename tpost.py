@@ -13,9 +13,10 @@ def post_content_to_server(url, content=None):
         content = pyperclip.paste()
 
     content_replaced = content.replace("\n", "<LF>").replace("\r", "<CR>").replace("\t", "<TAB>").replace(" ", "<SPACE>")
-    print(content_replaced)
+    print(f"Content: {content_replaced}")
 
     response = requests.post(url, json={"text": content_replaced})
+    print(f"Server response: {response.text}")
 
     if response.status_code == 200:
         print(f"Clipboard content sent to {url}")
