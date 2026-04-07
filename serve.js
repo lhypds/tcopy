@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const { fileWatcher } = require('./utils/fileUtils');
 const app = express();
 
 // Load environment variables from .env file
@@ -8,6 +9,7 @@ dotenv.config();
 
 const port = process.env.PORT || 5460;
 const outputFile = 'clipboard.txt';
+const watchInterval = 300;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -46,6 +48,9 @@ app.get('/', (req, res) => {
     }
   });
 });
+
+// Route for Server-Sent Events to watch file changes
+app.get('/events', fileWatcher(outputFile, watchInterval));
 
 app.listen(port, () => {
   if (!fs.existsSync(outputFile)) {
