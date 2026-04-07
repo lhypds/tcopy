@@ -27,11 +27,11 @@ app.post('/', (req, res) => {
       if (err) {
         res.status(500).send('Error saving the text');
       } else {
-        res.send('Text replaced successfully');
+        res.send('Saved: ' + textInput);
       }
     });
   } else {
-    res.status(400).send('No text input provided');
+    res.status(400).send('No text input provided.');
   }
 });
 
