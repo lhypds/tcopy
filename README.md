@@ -5,22 +5,27 @@ tcopy
 
 `tcopy`, is a simple text copier for copy text from one machine to another machine.  
 
-Two modes are provided:
-1. File mode, use a file as text cache.  
-2. Server mode, store text on server. Use API to save or get the content.  
+Server mode:  
+Use server to manage shared text and API to get or update shared text.  
+2 machine must both have access to the server.  
 
-Corss platform are supported:  
-1. Windows  
-2. macOS  
-3. Linux  
+File mode:  
+Use a txt file as a shared file between two computers.  
+2 computers must both have access to the file.  
 
+tcopy command examples:  
+`tcopy abc`  
+`tcopy -f filename.txt`  
+Then on another machine, paste the text.  
+For server mode, use `tfetch.py` to get the text from server before paste.  
+
+
+How It Works
+------------
 
 ![image](https://github.com/user-attachments/assets/fec4f88d-1b45-4ab5-a0c4-ccebc0b77aa3)
 
-
-Dependencies
-------------
-
+* Dependencies  
 Python 3  
 Node.js  
 
@@ -30,17 +35,19 @@ Setup
 
 Run `pip install -r requirements.txt` to install the Python dependencies.  
 Run `npm install` to install the dependencies for the server.  
+Setup `.env` file. (see the `.env` section below)
 
-* Line ending
-In `.env` file set the line ending. (`LINE_ENDING_SAVING`).  
-`LF` for Unix/Linux. (LF, line feed)  
-`CRLF` for Windows style. (CRLF, carriage return and line feed)  
-`CR` for macOS style. (CR, carriage return)  
+
+Shortcut Setup
+--------------
 
 * Keyboard Maestro (macOS)  
-Create new action with shortcut, for example "Command + Shift + V".  
+Create new action with a custom shortcut.  
 Trigger a "Execute Shell Script"  
 Example: `cd /Users/username/code/tcopy && /Users/username/.pyenv/shims/python tfetch.py`  
+
+* WinHotKey (Windows)
+<img src="https://github.com/user-attachments/assets/013468fa-7dca-4a9d-bfe5-2d16def43780" width="500">
 
 
 Linux CLI Support
@@ -135,13 +142,6 @@ Server port number for `serve.js`.
 * LINE_ENDING_SAVING  
 Line ending for saving.  
 Use `LF`, `CRLF` or `CR`.  
-
-
-
-Hotkey Setup
-------------
-
-Example:  
-
-<img src="https://github.com/user-attachments/assets/013468fa-7dca-4a9d-bfe5-2d16def43780" width="500">
-
+`LF` for Unix/Linux. (LF, line feed)  
+`CRLF` for Windows style. (CRLF, carriage return and line feed)  
+`CR` for macOS style. (CR, carriage return)  
