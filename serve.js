@@ -30,16 +30,12 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
     fs.writeFileSync(filePath, '', 'utf8');
   }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
   const sendFileContent = () => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
         return;
       }
+      console.log(`[${new Date().toISOString()}] File changed, sending new content to client.`);
       res.write(`data: ${JSON.stringify({ text: data || '', timestamp: new Date().toISOString() })}\n\n`);
     });
   };
@@ -95,6 +91,14 @@ app.get('/', (req, res) => {
 
 // Route for Server-Sent Events to watch file changes
 app.get('/events', (req, res) => {
+  console.log(`[${new Date().toISOString()}] Client connected to /events endpoint.`);
+
+  // Send an initial heartbeat to establish the connection
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
   const heartbeatTimer = setInterval(() => {
     if (!res.writableEnded) {
       res.write(`data: ${JSON.stringify({ text: '###ALIVE###', timestamp: new Date().toISOString() })}\n\n`);
@@ -103,6 +107,7 @@ app.get('/events', (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeatTimer);
+    console.log(`[${new Date().toISOString()}] Client disconnected from /events endpoint.`);
   });
 
   watchFileEvents(req, res);
