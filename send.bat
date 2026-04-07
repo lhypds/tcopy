@@ -1,1 +1,0 @@
-python txtsender.py

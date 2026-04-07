@@ -40,7 +40,7 @@ In `.env` file set the line ending. (`LINE_ENDING_SAVING`).
 * Keyboard Maestro (macOS)  
 Create new action with shortcut, for example "Command + Shift + V".  
 Trigger a "Execute Shell Script"  
-Example: `cd /Users/username/code/tcopy && /Users/username/.pyenv/shims/python txtreciever.py`  
+Example: `cd /Users/username/code/tcopy && /Users/username/.pyenv/shims/python tfetch.py`  
 
 
 Linux CLI Support
@@ -70,13 +70,12 @@ Set `STORE_FILE` to the path of the txt file.
 * Modules  
 
 1. Sender  
-The `txtsender.py` will use OS clipboard and save the content to the file (the `STORE_FILE`).  
-Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
-(I use `Shift + Alt + C` to trigger the `send.bat`).  
+The `tsend.py` will use OS clipboard and save the content to the file (the `STORE_FILE`).  
+Use AutoHotKey or WinHotKey to trigger the `tsend.py`.  
+(I use `Shift + Alt + C` to trigger the `tsend.py`).  
 
 2. Watcher  
-The `txtwatcher.py` will watch and detect the file changes and copy the content to the OS clipboard automatically.  
-Run `start.bat` to start the watcher.  
+The `twatch.py` will watch and detect the file changes and copy the content to the OS clipboard automatically.  
 
 
 Server Mode
@@ -96,15 +95,15 @@ Set `STORE_URL` to the URL of the server.
 
 * Modules
 
-1. Sender (`txtsender.py`)  
+1. Sender (`tsend.py`)  
 Automatically get the clipboard content and send it to the server.  3
-Use AutoHotKey or WinHotKey to trigger the `txtsender.py` or `send.bat`.  
-(I use `Shift + Alt + C` to trigger the `send.bat`).  
+Use AutoHotKey or WinHotKey to trigger the `tsend.py`.  
+(I use `Shift + Alt + C` to trigger the `tsend.py`).  
 
-2. Reciever (`txtreciever.py`)  
+2. Fetcher (`tfetch.py`)  
 Get the content from server with GET API, and save to clipboard.  
-Use AutoHotKey or WinHotKey to trigger the `txtreciever.py` or `recieve.bat`.  
-(I use `Shift + Alt + V` to trigger the `recieve.bat`).  
+Use AutoHotKey or WinHotKey to trigger the `tfetch.py`.  
+(I use `Shift + Alt + V` to trigger the `tfetch.py`).  
 
 * Server API  
 
