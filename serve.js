@@ -9,6 +9,10 @@ dotenv.config();
 const port = process.env.PORT || 5460;
 const outputFile = 'clipboard.txt';
 
+if (!fs.existsSync(outputFile)) {
+  fs.writeFileSync(outputFile, '', 'utf8');
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -33,6 +37,10 @@ app.post('/', (req, res) => {
 
 // Route to get the content of the file
 app.get('/', (req, res) => {
+  if (!fs.existsSync(outputFile)) {
+    return res.send('');
+  }
+
   fs.readFile(outputFile, 'utf8', (err, data) => {
     if (err) {
       res.status(500).send('Error reading the file');
