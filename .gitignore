@@ -1,6 +1,6 @@
 .env
 .venv
-*.txt
+clipboard.txt
 node_modules
 .vscode
 .DS_Store
