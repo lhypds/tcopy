@@ -12,6 +12,11 @@ if [ ! -f "requirements.txt" ]; then
   exit 1
 fi
 
+if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+  echo "Creating .env from .env.example..."
+  cp .env.example .env
+fi
+
 if [ ! -d ".venv" ]; then
   echo "Creating virtual environment at .venv..."
   python3 -m venv .venv
