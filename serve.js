@@ -9,10 +9,6 @@ dotenv.config();
 const port = process.env.PORT || 5460;
 const outputFile = 'clipboard.txt';
 
-if (!fs.existsSync(outputFile)) {
-  fs.writeFileSync(outputFile, '', 'utf8');
-}
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -52,5 +48,10 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
+  if (!fs.existsSync(outputFile)) {
+    console.log(`Output file "${outputFile}" does not exist. Creating it.`);
+    fs.writeFileSync(outputFile, '', 'utf8');
+  }
+
   console.log(`Server is running at http://localhost:${port}`);
 });
