@@ -9,7 +9,7 @@ dotenv.config();
 const port = process.env.PORT || 5460;
 const outputFile = 'clipboard.txt';
 const watchInterval = 300;
-const heartbeatIntervalMs = 60 * 1000;
+const heartbeatIntervalMs = 30 * 1000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

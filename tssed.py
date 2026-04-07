@@ -7,63 +7,55 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HEARTBEAT_TIMEOUT_SECONDS = 3 * 60
+HEARTBEAT_TIMEOUT_SECONDS = 40
 
 
 def connect_and_watch_events(url):
     """Connect to SSE endpoint and update clipboard on content changes."""
-    last_heartbeat = time.time()
-
     while True:
         try:
             print(f"Connecting to SSE endpoint: {url}/sse")
-            response = requests.get(f"{url}/sse", stream=True, timeout=None)
-            response.raise_for_status()
+            with requests.get(
+                f"{url}/sse",
+                stream=True,
+                timeout=(10, HEARTBEAT_TIMEOUT_SECONDS),
+            ) as response:
+                response.raise_for_status()
 
-            last_heartbeat = time.time()
-
-            for line in response.iter_lines():
-                if not line:
-                    continue
-
-                line = line.decode('utf-8') if isinstance(line, bytes) else line
-
-                if line.startswith('data: '):
-                    try:
-                        json_str = line[6:]  # Remove 'data: ' prefix
-                        data = json.loads(json_str)
-                        text = data.get('text', '')
-
-                        # Update heartbeat time for any message
-                        last_heartbeat = time.time()
-
-                        # Skip ###ALIVE### messages, only process actual content
-                        if text == '###ALIVE###':
-                            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Heartbeat received.")
-                            continue
-
-                        # Copy content to clipboard
-                        print(f"Received content, updating clipboard...")
-                        content_replaced = text.replace('\n', "<LF>").replace('\r', "<CR>").replace('\t', "<TAB>").replace(' ', "<SPACE>")
-                        print(f"Content: `{content_replaced}`")
-                        pyperclip.copy(text)
-                        print("Content copied to clipboard successfully.")
-
-                    except json.JSONDecodeError as e:
-                        print(f"Error parsing JSON: {e}")
+                for line in response.iter_lines(decode_unicode=True):
+                    if not line:
                         continue
 
-                # Check if heartbeat timeout
-                time_since_heartbeat = time.time() - last_heartbeat
-                if time_since_heartbeat > HEARTBEAT_TIMEOUT_SECONDS:
-                    print(f"No heartbeat received for {HEARTBEAT_TIMEOUT_SECONDS} seconds. Reconnecting...")
-                    break
+                    if line.startswith('data: '):
+                        try:
+                            json_str = line[6:]  # Remove 'data: ' prefix
+                            data = json.loads(json_str)
+                            text = data.get('text', '')
+
+                            # Skip ###ALIVE### messages, only process actual content
+                            if text == '###ALIVE###':
+                                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Heartbeat received.")
+                                continue
+
+                            # Copy content to clipboard
+                            print("Received content, updating clipboard...")
+                            content_replaced = text.replace('\n', "<LF>").replace('\r', "<CR>").replace('\t', "<TAB>").replace(' ', "<SPACE>")
+                            print(f"Content: `{content_replaced}`")
+                            pyperclip.copy(text)
+                            print("Content copied to clipboard successfully.")
+
+                        except json.JSONDecodeError as e:
+                            print(f"Error parsing JSON: {e}")
+                            continue
 
         except requests.exceptions.Timeout:
-            print("Connection timeout. Reconnecting...")
+            print(f"No heartbeat received for {HEARTBEAT_TIMEOUT_SECONDS} seconds. Reconnecting...")
             time.sleep(2)
         except requests.exceptions.ConnectionError as e:
-            print(f"Connection error: {e}. Reconnecting...")
+            if 'Read timed out' in str(e):
+                print(f"No heartbeat received for {HEARTBEAT_TIMEOUT_SECONDS} seconds. Reconnecting...")
+            else:
+                print(f"Connection error: {e}. Reconnecting...")
             time.sleep(2)
         except requests.exceptions.RequestException as e:
             print(f"Request error: {e}. Reconnecting...")
