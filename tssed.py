@@ -39,7 +39,7 @@ def connect_and_watch_events(url):
 
                         # Skip ###ALIVE### messages, only process actual content
                         if text == '###ALIVE###':
-                            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Heartbeat received")
+                            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Heartbeat received.")
                             continue
 
                         # Copy content to clipboard
