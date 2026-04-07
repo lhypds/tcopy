@@ -90,8 +90,8 @@ app.get('/', (req, res) => {
 });
 
 // Route for Server-Sent Events to watch file changes
-app.get('/events', (req, res) => {
-  console.log(`[${new Date().toISOString()}] Client connected to /events endpoint.`);
+app.get('/sse', (req, res) => {
+  console.log(`[${new Date().toISOString()}] Client connected to /sse endpoint.`);
 
   // Send an initial heartbeat to establish the connection
   res.setHeader('Content-Type', 'text/event-stream');
@@ -107,7 +107,7 @@ app.get('/events', (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeatTimer);
-    console.log(`[${new Date().toISOString()}] Client disconnected from /events endpoint.`);
+    console.log(`[${new Date().toISOString()}] Client disconnected from /sse endpoint.`);
   });
 
   watchFileEvents(req, res);
@@ -124,7 +124,7 @@ app.listen(port, () => {
   const endpoints = [
     { method: 'GET', path: '/' },
     { method: 'POST', path: '/' },
-    { method: 'GET', path: '/events' },
+    { method: 'GET', path: '/sse' },
   ]
   console.log(`Server is running at \`http://localhost:${port}\`.`);
   console.log('\nAvailable endpoints:');
