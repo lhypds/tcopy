@@ -125,7 +125,7 @@ Use AutoHotKey or WinHotKey to trigger the `tfetch.py`.
 GET `/`  
 Server simply read the file and send the content as response.  
 
-POST `/save`  
+POST `/`  
 The client will send the content in request body to the server.  
 The server will save the content to a file.  
 

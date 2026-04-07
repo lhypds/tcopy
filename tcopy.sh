@@ -22,7 +22,7 @@ send_request() {
   echo "Executing: curl ..."
 
   # Execute the curl command directly
-  curl -G --data-urlencode "text=${text}" "${STORE_URL}/save"
+  curl -G --data-urlencode "text=${text}" "${STORE_URL}"
   echo ""
 }
 
