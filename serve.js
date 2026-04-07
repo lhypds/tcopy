@@ -29,12 +29,10 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
       if (err) {
         return;
       }
-
       res.write(`data: ${JSON.stringify({ text: data || '', timestamp: new Date().toISOString() })}\n\n`);
     });
   };
 
-  sendFileContent();
   const watcher = (curr, prev) => {
     if (curr.mtimeMs !== prev.mtimeMs || curr.size !== prev.size) {
       sendFileContent();
