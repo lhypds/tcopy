@@ -17,7 +17,7 @@ def connect_and_watch_events(url):
     while True:
         try:
             print(f"Connecting to SSE endpoint: {url}/sse")
-            response = requests.get(f"{url}/sse", stream=True, timeout=HEARTBEAT_TIMEOUT_SECONDS + 60)
+            response = requests.get(f"{url}/sse", stream=True, timeout=None)
             response.raise_for_status()
 
             last_heartbeat = time.time()
