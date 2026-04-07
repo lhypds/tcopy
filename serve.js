@@ -14,6 +14,17 @@ const heartbeatIntervalMs = 60 * 1000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  const startTime = Date.now();
+
+  res.on('finish', () => {
+    const durationMs = Date.now() - startTime;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms`);
+  });
+
+  next();
+});
+
 const fileWatcher = (filePath, interval = 300) => (req, res) => {
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '', 'utf8');
@@ -105,5 +116,15 @@ app.listen(port, () => {
     fs.writeFileSync(outputFile, '', 'utf8');
   }
 
-  console.log(`Server is running at http://localhost:${port}`);
+  const endpoints = [
+    { method: 'GET', path: '/' },
+    { method: 'POST', path: '/' },
+    { method: 'GET', path: '/events' },
+  ]
+  console.log(`Server is running at \`http://localhost:${port}\`.`);
+  console.log('\nAvailable endpoints:');
+  endpoints.forEach(endpoint => {
+    console.log(`- ${endpoint.method} ${endpoint.path}`);
+  });
+  console.log('');
 });
