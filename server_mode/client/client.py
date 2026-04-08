@@ -14,7 +14,7 @@ load_dotenv()
 
 
 HEARTBEAT_TIMEOUT = 40
-RECONNECT_DELAY = 30
+RECONNECT_DELAY = 10
 
 logging.basicConfig(
     level=logging.INFO,
