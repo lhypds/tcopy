@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Server mode usage: $0 <text>"
+    echo "Usage (server environment): tcopy <text>"
     exit 1
 fi
 
