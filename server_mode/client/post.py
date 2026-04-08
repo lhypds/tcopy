@@ -11,7 +11,7 @@ load_dotenv()
 
 
 # If content is None, it will read from clipboard and send to server.
-def post_content_to_server(url, content=None):
+def post_content(url, content=None):
     if content is None:
         content = pyperclip.paste()
 
@@ -77,6 +77,6 @@ if __name__ == "__main__":
         print("Error: SERVER_BASE_URL not found in .env file")
     else:
         content = " ".join(args.content).strip() if args.content else None
-        success = post_content_to_server(server_base_url, content)
+        success = post_content(server_base_url, content)
         if not success:
             raise SystemExit(1)
