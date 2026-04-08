@@ -24,5 +24,3 @@ fi
   cd "$target_dir"
   bash ./setup.sh
 )
-
-echo "Setup complete"

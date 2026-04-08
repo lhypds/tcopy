@@ -39,4 +39,4 @@ echo "Installing Python packages in .venv from requirements.txt..."
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
 
-echo "Python setup complete using .venv."
+echo "Client setup completed."

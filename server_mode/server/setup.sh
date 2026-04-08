@@ -21,3 +21,5 @@ fi
 
 # Install dependencies
 npm install
+
+echo "Server setup completed."
