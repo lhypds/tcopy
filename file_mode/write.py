@@ -13,6 +13,14 @@ def write_content_to_file(file_path, line_ending_saving="CRLF", content=None):
     if content is None:
         content = pyperclip.paste()
 
+    content_replaced = (
+        content.replace("\n", "<LF>")
+        .replace("\r", "<CR>")
+        .replace("\t", "<TAB>")
+        .replace(" ", "<SPACE>")
+    )
+    print(f"Write content: `{content_replaced}`")
+
     line_ending = "\r\n"
     if line_ending_saving == "CRLF":
         line_ending = "\r\n"

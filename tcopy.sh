@@ -178,6 +178,7 @@ resolveTargetDir() {
 
 runCommandScript() {
 	local script_name="$1"
+	shift || true
 	local target_dir
 	target_dir="$(resolveTargetDir)"
 
@@ -188,7 +189,7 @@ runCommandScript() {
 
 	(
 		cd "$target_dir"
-		bash "./${script_name}.sh"
+		bash "./${script_name}.sh" "$@"
 	)
 }
 
@@ -221,7 +222,7 @@ showInfo() {
 }
 
 printUsage() {
-	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help]"
+	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
 }
 
 case "$command" in
@@ -259,9 +260,8 @@ case "$command" in
 		runCommandScript "copy"
     ;;
 	*)
-		echo "Error: unknown command '$command'"
-		printUsage
-		exit 1
+		readEnv
+		runCommandScript "copy" "$@"
 		;;
 esac
 
