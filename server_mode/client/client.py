@@ -16,13 +16,13 @@ def connect_and_watch_events(base_url):
     """Connect to SSE endpoint and update clipboard on content changes."""
     while True:
         try:
-            print(f"Connecting to SSE endpoint: {base_url}/sse")
             with requests.get(
                 f"{base_url}/sse",
                 stream=True,
                 timeout=(10, HEARTBEAT_TIMEOUT_SECONDS),
             ) as response:
                 response.raise_for_status()
+                print(f"Connected to SSE endpoint: {base_url}/sse")
 
                 for line in response.iter_lines(decode_unicode=True):
                     if not line:
@@ -36,15 +36,14 @@ def connect_and_watch_events(base_url):
 
                             # Skip ###ALIVE### messages, only process actual content
                             if text == '###ALIVE###':
-                                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Heartbeat received.")
+                                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Heartbeat.")
                                 continue
 
                             # Copy content to clipboard
                             print("Received content, updating clipboard...")
                             content_replaced = text.replace('\n', "<LF>").replace('\r', "<CR>").replace('\t', "<TAB>").replace(' ', "<SPACE>")
-                            print(f"Content: `{content_replaced}`")
                             pyperclip.copy(text)
-                            print("Content copied to clipboard successfully.")
+                            print(f"Content copied: `{content_replaced}`")
 
                         except json.JSONDecodeError as e:
                             print(f"Error parsing JSON: {e}")

@@ -23,7 +23,7 @@ def fetch_and_copy_to_clipboard(base_url):
 
         # Copy the content to the clipboard
         pyperclip.copy(content)
-        print("Content copied to clipboard successfully.")
+        print("Content copied to clipboard.")
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching content from {base_url}: {e}")
