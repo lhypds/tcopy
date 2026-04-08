@@ -1,7 +1,8 @@
 {
-  "name": "tcopy",
+  "name": "tcopy-server",
   "version": "1.0.0",
   "description": "Copy and paste from any machine to any machine.",
+  "type": "module",
   "main": "serve.js",
   "scripts": {
     "start": "node serve.js",

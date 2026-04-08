@@ -1,6 +1,8 @@
-const express = require('express');
-const fs = require('fs');
-const dotenv = require('dotenv');
+import express from 'express';
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { createLogger } from '../utils/logUtils.js';
+
 const app = express();
 
 // Load environment variables from .env file
@@ -12,14 +14,7 @@ const logFile = 'server.log';
 const watchInterval = 300;
 const heartbeatIntervalMs = 30 * 1000;
 
-const log = (message) => {
-  console.log(message);
-  fs.appendFile(logFile, `${message}\n`, 'utf8', (err) => {
-    if (err) {
-      console.error(`Failed to write log file: ${err.message}`);
-    }
-  });
-};
+const log = createLogger(logFile);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,7 +24,7 @@ app.use((req, res, next) => {
 
   res.on('finish', () => {
     const durationMs = Date.now() - startTime;
-    log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms`);
+    log('info', `${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms`);
   });
 
   next();
@@ -50,7 +45,7 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
       const id = data.match(/###ID=(.*?)###/)?.[1] || null;
       const text = data.replace(`###ID=${id}###`, '');
 
-      log(`[${new Date().toISOString()}] File changed, sending new content to client.`);
+      log('info', 'File changed, sending new content to client.');
       res.write(`data: ${JSON.stringify({ id: id, text: text || '', timestamp: new Date().toISOString() })}\n\n`);
     });
   };
@@ -76,7 +71,7 @@ app.post('/', (req, res) => {
 
   if (text) {
     // Log the received text input to the console
-    log(`Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
+    log('info', `Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
 
     fs.writeFile(outputFile, `###ID=${id}###` + text, (err) => {
       if (err) {
@@ -107,7 +102,7 @@ app.get('/', (req, res) => {
 
 // Route for Server-Sent Events to watch file changes
 app.get('/sse', (req, res) => {
-  log(`[${new Date().toISOString()}] Client connected to /sse endpoint.`);
+  log('info', 'Client connected to /sse endpoint.');
 
   // Send an initial heartbeat to establish the connection
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -123,7 +118,7 @@ app.get('/sse', (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeatTimer);
-    log(`[${new Date().toISOString()}] Client disconnected from /sse endpoint.`);
+    log('info', 'Client disconnected from /sse endpoint.');
   });
 
   watchFileEvents(req, res);
@@ -139,7 +134,7 @@ const writeIdFile = () => {
 app.listen(port, () => {
   // Ensure the output file exists
   if (!fs.existsSync(outputFile)) {
-    log(`Output file "${outputFile}" does not exist. Creating it.`);
+    log('info', `Output file "${outputFile}" does not exist. Creating it.`);
     fs.writeFileSync(outputFile, '', 'utf8');
   }
 
@@ -147,7 +142,7 @@ app.listen(port, () => {
   writeIdFile();
 
   // Log server start message
-  log(`Server is running at \`http://localhost:${port}\`.`);
+  log('info', `Server is running at \`http://localhost:${port}\`.`);
 
   // Print available endpoints
   const endpoints = [

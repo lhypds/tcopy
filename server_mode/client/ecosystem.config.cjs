@@ -9,9 +9,9 @@ function readEnv() {
   }
 }
 
-function getEnvVar(key, defaultValue) {
+function getEnvVar(key) {
   const match = readEnv().match(new RegExp(`^${key}=(.*)$`, "m"));
-  return match ? match[1].trim() : defaultValue;
+  return match ? match[1].trim() : "";
 }
 
 const PM2_NAME = getEnvVar("PM2_NAME");
@@ -19,7 +19,7 @@ const PM2_NAME = getEnvVar("PM2_NAME");
 module.exports = {
   apps: [
     {
-      name: PM2_NAME || "tcopy",
+      name: PM2_NAME || "tcopy-client",
       script: "npm",
       args: "start",
     },

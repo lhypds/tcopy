@@ -1,0 +1,14 @@
+{
+  "name": "tcopy-client",
+  "version": "1.0.0",
+  "description": "tcopy client — clipboard sync over HTTP/SSE",
+  "type": "module",
+  "scripts": {
+    "start": "node client.js"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "dotenv": "^16.0.0",
+    "eventsource": "^2.0.0"
+  }
+}
