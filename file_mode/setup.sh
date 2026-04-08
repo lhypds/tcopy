@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-git pull
-
 if ! command -v python3 >/dev/null 2>&1; then
   echo "Error: python3 is not installed or not in PATH."
   exit 1

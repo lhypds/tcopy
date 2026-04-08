@@ -10,11 +10,11 @@ environment=""
 command="${1:-}"
 
 printUsage() {
-	echo "Usage: ./tcopy.sh [setup|start|stop|restart|status|-v|--version|-h|--help]"
+	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|status|-v|--version|-h|--help]"
 }
 
 if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
-	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
+	echo "$(cat "$SCRIPT_DIR/VERSION")"
 	exit 0
 fi
 
@@ -123,8 +123,22 @@ writeEnv() {
 }
 
 readEnv() {
-	mode="$(_read_env_value "MODE" "$ENV_FILE")"
-	environment="$(_read_env_value "ENVIRONMENT" "$ENV_FILE")"
+	local mode_option="${1:-}"
+
+	if [[ "$mode_option" == "reset" ]]; then
+		mode=""
+		environment=""
+	else
+		mode="$(_read_env_value "MODE" "$ENV_FILE")"
+		environment="$(_read_env_value "ENVIRONMENT" "$ENV_FILE")"
+	fi
+
+	if [[ "$mode_option" == "nochoose" ]]; then
+		if [[ "$mode" == "file" ]]; then
+			environment="file"
+		fi
+		return 0
+	fi
 
 	if [[ "$mode" != "file" && "$mode" != "server" ]]; then
 		_choose_mode
@@ -162,23 +176,6 @@ resolveTargetDir() {
 	echo "$target_dir"
 }
 
-runSetup() {
-	local target_dir
-	target_dir="$(resolveTargetDir)"
-
-	if [ ! -f "$target_dir/setup.sh" ]; then
-		echo "Error: setup.sh not found in $target_dir"
-		exit 1
-	fi
-
-	(
-		cd "$target_dir"
-		bash ./setup.sh
-	)
-
-	echo "Setup complete"
-}
-
 runCommandScript() {
 	local script_name="$1"
 	local target_dir
@@ -195,27 +192,55 @@ runCommandScript() {
 	)
 }
 
-showStatus() {
-	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
-  printUsage
-	echo "\`$mode\` mode."
-	if [[ "$mode" == "server" ]]; then
-		echo "\`$environment\` environment."
+runRootScript() {
+	local script_name="$1"
+	local script_path="$SCRIPT_DIR/${script_name}.sh"
+	shift
+
+	if [ ! -f "$script_path" ]; then
+		echo "Error: ${script_name}.sh not found in $SCRIPT_DIR"
+		exit 1
 	fi
+
+	bash "$script_path" "$@"
+}
+
+runUpdate() {
+	(
+		cd "$SCRIPT_DIR"
+		git pull
+	)
+}
+
+showInfo() {
+	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
+  echo "Current mode: $mode"
+  if [[ "$mode" == "server" ]]; then
+    echo "Current envrionment: $environment"
+  fi
 }
 
 printUsage() {
-	echo "Usage: ./tcopy.sh [setup|start|stop|restart|status|-v|--version|-h|--help]"
+	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help]"
 }
 
 case "$command" in
-	setup)
-		readEnv
-		runSetup
+	install)
+		runRootScript "install"
 		;;
-	status|"")
-		readEnv
-		showStatus
+	uninstall)
+		runRootScript "uninstall"
+		;;
+	update)
+		runUpdate
+		;;
+	setup)
+		readEnv "reset"
+		runRootScript "setup" "$(resolveTargetDir)"
+		;;
+	info)
+		readEnv "nochoose"
+		showInfo
 		;;
 	start)
 		readEnv
@@ -229,6 +254,9 @@ case "$command" in
 		readEnv
 		runCommandScript "restart"
 		;;
+  "")
+    printUsage
+    ;;
 	*)
 		echo "Error: unknown command '$command'"
 		printUsage

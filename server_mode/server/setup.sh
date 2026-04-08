@@ -1,7 +1,5 @@
 # !/bin/bash
 
-git pull
-
 # Ensure Node.js is installed
 if ! command -v node >/dev/null 2>&1; then
     echo "Error: Node.js is not installed. Please install Node.js first."
