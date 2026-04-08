@@ -75,12 +75,12 @@ Development
 Server APIs  
 
 GET `/sse`  
-Server will send the content as SSE stream.  
+Create a Server-Sent Events (SSE) stream connection between the server and the client.  
 Client can listen to the stream and update the content in real time.  
 
 GET `/`  
-Server simply read the file and send the content as response.  
+Server simply read the `clipboard.txt` and send the content as response.  
 
 POST `/`  
 The client will send the content in request body to the server.  
-The server will save the content to a file.  
+The server will save the content to the `clipboard.txt`.  
