@@ -87,28 +87,28 @@ def connect_and_watch_events(base_url, id):
 
         except requests.exceptions.Timeout:
             logger.warning(
-                f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting({RECONNECT_DELAY}s)..."
+                f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting ({RECONNECT_DELAY}s)..."
             )
             time.sleep(RECONNECT_DELAY)
         except requests.exceptions.ConnectionError as e:
             if "Read timed out" in str(e):
                 logger.warning(
-                    f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting({RECONNECT_DELAY}s)..."
+                    f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting ({RECONNECT_DELAY}s)..."
                 )
             else:
                 logger.warning(
-                    f"Connection error: {e}. Reconnecting({RECONNECT_DELAY}s)..."
+                    f"Connection error: {e}. Reconnecting ({RECONNECT_DELAY}s)..."
                 )
             time.sleep(RECONNECT_DELAY)
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Request error: {e}. Reconnecting({RECONNECT_DELAY}s)...")
+            logger.warning(f"Request error: {e}. Reconnecting ({RECONNECT_DELAY}s)...")
             time.sleep(RECONNECT_DELAY)
         except KeyboardInterrupt:
             logger.info("Stopped by user.")
             break
         except Exception as e:
             logger.exception(
-                f"Unexpected error: {e}. Reconnecting({RECONNECT_DELAY}s)..."
+                f"Unexpected error: {e}. Reconnecting ({RECONNECT_DELAY}s)..."
             )
             time.sleep(RECONNECT_DELAY)
 
