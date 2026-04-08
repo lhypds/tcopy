@@ -5,16 +5,7 @@ tcopy
 
 `tcopy` is for copying text between two computers in real time.  
 
-
-Features
---------
-
-1. Realtime synchronization  
-
 When the text is updated on one machine, it will be immediately reflected on the other machine.  
-
-2. Multiple modes  
-
 It supports both server mode and file mode, allowing users to choose the most suitable method for their needs.  
 
 Server mode:  
@@ -24,6 +15,34 @@ Use server to manage shared text and API to get or update shared text.
 File mode:  
 Use a txt file as a shared file between two computers.  
 2 computers must both have access to the file.  
+
+
+Quick Start
+-----------
+
+For example, for server mode.
+User want to copy from machine A to machine B through a server.
+
+On server  
+Clone the repository and run `./tcopy.sh install` to install the command.    
+Run `tcopy setup` and choose `server` mode, then choose `server` environment.  
+Then start the server with `tcopy start`.  
+
+On both machine A and machine B  
+Clone the repository and run `./tcopy.sh install` to install the command.  
+Run `tcopy setup` and choose `server` mode, then choose `client` environment.  
+Then start the client with `tcopy start`.  
+
+On machine A  
+Copy current clipboard  
+`tcopy`  
+Or copy any text  
+`tcopy "abc"`  
+`tcopy` will send text to server.  
+
+On machine B
+Client automatically receive the text and update clipboard.  
+Use `Ctrl + V` to paste the text on machine B.  
 
 
 Requirements
@@ -36,7 +55,7 @@ Node.js (for server mode)
 Shortcut Setup
 --------------
 
-Use `tcopy install` to install as a commmand.
+Use `tcopy install` to install as a commmand.  
 
 * Windows  
 Use like WinHotKey.  
