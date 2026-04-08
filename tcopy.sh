@@ -255,7 +255,8 @@ case "$command" in
 		runCommandScript "restart"
 		;;
   "")
-    printUsage
+		readEnv
+		runCommandScript "copy"
     ;;
 	*)
 		echo "Error: unknown command '$command'"

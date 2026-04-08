@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+# If content is None, read from clipboard. Otherwise, use the provided content.
 def write_content_to_file(file_path, line_ending_saving="CRLF", content=None):
     if content is None:
         content = pyperclip.paste()
