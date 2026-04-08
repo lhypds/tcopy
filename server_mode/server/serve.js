@@ -146,15 +146,18 @@ app.listen(port, () => {
   // Write the id file
   writeIdFile();
 
+  // Log server start message
+  log(`Server is running at \`http://localhost:${port}\`.`);
+
+  // Print available endpoints
   const endpoints = [
     { method: 'GET', path: '/' },
     { method: 'POST', path: '/' },
     { method: 'GET', path: '/sse' },
   ]
-  log(`Server is running at \`http://localhost:${port}\`.`);
-  log('\nAvailable endpoints:');
+  console.log('\nAvailable endpoints:');
   endpoints.forEach(endpoint => {
-    log(`- ${endpoint.method} ${endpoint.path}`);
+    console.log(`- ${endpoint.method} ${endpoint.path}`);
   });
-  log('');
+  console.log('');
 });
