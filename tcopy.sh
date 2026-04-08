@@ -1,135 +1,238 @@
 #!/bin/bash
 
-# Get the directory where the script is located (portable across Linux/macOS)
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 
-# Load MODE and STORE from the .env file located in the same directory as the script
-if [ -f "$ENV_FILE" ]; then
-  ENV_VALUES=$(python3 - "$ENV_FILE" <<'PY'
-import sys
+mode=""
+environment=""
+command="${1:-}"
 
-env_file = sys.argv[1]
-mode = ""
-store = ""
-
-with open(env_file, "r", encoding="utf-8") as f:
-    for line in f:
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        if key == "MODE":
-            mode = value
-        elif key == "STORE":
-            store = value
-
-print(f"{mode}\t{store}")
-PY
-)
-  IFS=$'\t' read -r MODE STORE <<< "$ENV_VALUES"
-else
-  MODE=""
-  STORE=""
-fi
-
-# Default to server mode when MODE is not set
-if [ -z "$MODE" ]; then
-  MODE="server"
-fi
-MODE=$(printf '%s' "$MODE" | tr '[:upper:]' '[:lower:]')
-
-# Check if STORE is defined
-if [ -z "$STORE" ]; then
-  echo "STORE not defined in .env file. Please specify the target."
-  exit 1
-fi
-echo "Mode: $MODE"
-echo "Store: $STORE"
-
-# Function to send POST request
-send_request() {
-  local text="$1"
-  printf 'Sending request with text:\n%s\n' "$text"
-
-  # Build a JSON payload safely (handles quotes/newlines)
-  local json_payload
-  json_payload=$(printf '%s' "$text" | python3 -c 'import json,sys; print(json.dumps({"text": sys.stdin.read()}))')
-
-  # Print the curl command
-  echo "Executing: curl -X POST ..."
-
-  # Execute the curl command directly
-  curl -X POST \
-    -H "Content-Type: application/json" \
-    --data "$json_payload" \
-    "${STORE}"
-  echo ""
+printUsage() {
+	echo "Usage: ./tcopy.sh [setup|start|stop|restart|status|-v|--version|-h|--help]"
 }
 
-# Function to write text to file store
-write_to_file() {
-  local text="$1"
-  local store_dir
-
-  store_dir=$(dirname "$STORE")
-  mkdir -p "$store_dir"
-
-  printf '%s' "$text" > "$STORE"
-  echo "Content written to $STORE"
-}
-
-process_text() {
-  local text="$1"
-
-  if [ "$MODE" = "file" ]; then
-    write_to_file "$text"
-  elif [ "$MODE" = "server" ]; then
-    send_request "$text"
-  else
-    echo "Invalid MODE in .env: $MODE (expected: file or server)"
-    exit 1
-  fi
-}
-
-# Check if input is being piped or provided as arguments
-if [ -t 0 ]; then
-  # No data is being piped, so check arguments
-  if [ "$#" -eq 0 ]; then
-    echo "No input provided. Please provide text or use the -f option to specify a file."
-    exit 1
-  fi
-
-  if [ "$1" == "-f" ]; then
-    if [ -z "$2" ]; then
-      echo "No file provided after -f. Usage: tcopy -f <file>"
-      exit 1
-    fi
-
-    # Read content from the file
-    if [ -f "$2" ]; then
-      file_content=$(<"$2")
-      process_text "$file_content"
-    else
-      echo "File not found: $2"
-      exit 1
-    fi
-  else
-    # Check if text argument is non-empty
-    if [ -z "$1" ]; then
-      echo "No text provided. Please provide text or use the -f option to specify a file."
-      exit 1
-    fi
-    process_text "$1"
-  fi
-else
-  # Read from standard input
-  stdin_content=$(cat)
-  if [ -z "$stdin_content" ]; then
-    echo "No input provided via stdin. Please provide text or use the -f option to specify a file."
-    exit 1
-  fi
-  process_text "$stdin_content"
+if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
+	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
+	exit 0
 fi
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+	printUsage
+	exit 0
+fi
+
+_read_env_value() {
+	local key="$1"
+	local file="$2"
+
+	if [ ! -f "$file" ]; then
+		return 0
+	fi
+
+	grep -E "^[[:space:]]*${key}=" "$file" | tail -n 1 | cut -d '=' -f2- | sed 's/^"//; s/"$//' | sed "s/^'//; s/'$//"
+}
+
+_choose_mode() {
+	while true; do
+		printf "Choose MODE ([s]erver/[f]ile): "
+		read -r answer
+		case "${answer}" in
+			s|S|server|SERVER)
+				mode="server"
+				break
+				;;
+			f|F|file|FILE)
+				mode="file"
+				break
+				;;
+			*)
+				echo "Invalid MODE. Please choose 'server' or 'file'."
+				;;
+		esac
+	done
+}
+
+_choose_environment_for_server() {
+	while true; do
+		printf "Choose ENVIRONMENT for server mode ([s]erver/[c]lient): "
+		read -r answer
+		case "${answer}" in
+			s|S|server|SERVER)
+				environment="server"
+				break
+				;;
+			c|C|client|CLIENT)
+				environment="client"
+				break
+				;;
+			*)
+				echo "Invalid ENVIRONMENT. Please choose 'server' or 'client'."
+				;;
+		esac
+	done
+}
+
+writeEnv() {
+	local tmp_file
+
+	if [ ! -f "$ENV_FILE" ]; then
+		if [ -f "$SCRIPT_DIR/.env.example" ]; then
+			cp "$SCRIPT_DIR/.env.example" "$ENV_FILE"
+		else
+			touch "$ENV_FILE"
+		fi
+	fi
+
+	tmp_file="${ENV_FILE}.tmp"
+
+	awk -v k="MODE" -v v="$mode" '
+		BEGIN { updated = 0 }
+		$0 ~ "^[[:space:]]*" k "=" {
+			if (!updated) {
+				print k "=" v
+				updated = 1
+			}
+			next
+		}
+		{ print }
+		END {
+			if (!updated) {
+				print k "=" v
+			}
+		}
+	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
+
+	awk -v k="ENVIRONMENT" -v v="$environment" '
+		BEGIN { updated = 0 }
+		$0 ~ "^[[:space:]]*" k "=" {
+			if (!updated) {
+				print k "=" v
+				updated = 1
+			}
+			next
+		}
+		{ print }
+		END {
+			if (!updated) {
+				print k "=" v
+			}
+		}
+	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
+}
+
+readEnv() {
+	mode="$(_read_env_value "MODE" "$ENV_FILE")"
+	environment="$(_read_env_value "ENVIRONMENT" "$ENV_FILE")"
+
+	if [[ "$mode" != "file" && "$mode" != "server" ]]; then
+		_choose_mode
+	fi
+
+	if [[ "$mode" == "file" ]]; then
+		environment="file"
+	else
+		if [[ "$environment" != "server" && "$environment" != "client" ]]; then
+			_choose_environment_for_server
+		fi
+	fi
+
+	writeEnv
+}
+
+resolveTargetDir() {
+	local target_dir=""
+
+	if [[ "$mode" == "file" ]]; then
+		target_dir="$SCRIPT_DIR/file_mode"
+	elif [[ "$mode" == "server" ]]; then
+		if [[ "$environment" == "server" ]]; then
+			target_dir="$SCRIPT_DIR/server_mode/server"
+		else
+			target_dir="$SCRIPT_DIR/server_mode/client"
+		fi
+	fi
+
+	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
+		echo "Error: target directory not found for MODE=$mode ENVIRONMENT=$environment"
+		exit 1
+	fi
+
+	echo "$target_dir"
+}
+
+runSetup() {
+	local target_dir
+	target_dir="$(resolveTargetDir)"
+
+	if [ ! -f "$target_dir/setup.sh" ]; then
+		echo "Error: setup.sh not found in $target_dir"
+		exit 1
+	fi
+
+	(
+		cd "$target_dir"
+		bash ./setup.sh
+	)
+
+	echo "Setup complete"
+}
+
+runCommandScript() {
+	local script_name="$1"
+	local target_dir
+	target_dir="$(resolveTargetDir)"
+
+	if [ ! -f "$target_dir/${script_name}.sh" ]; then
+		echo "Error: ${script_name}.sh not found in $target_dir"
+		exit 1
+	fi
+
+	(
+		cd "$target_dir"
+		bash "./${script_name}.sh"
+	)
+}
+
+showStatus() {
+	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
+  printUsage
+	echo "\`$mode\` mode."
+	if [[ "$mode" == "server" ]]; then
+		echo "\`$environment\` environment."
+	fi
+}
+
+printUsage() {
+	echo "Usage: ./tcopy.sh [setup|start|stop|restart|status|-v|--version|-h|--help]"
+}
+
+case "$command" in
+	setup)
+		readEnv
+		runSetup
+		;;
+	status|"")
+		readEnv
+		showStatus
+		;;
+	start)
+		readEnv
+		runCommandScript "start"
+		;;
+	stop)
+		readEnv
+		runCommandScript "stop"
+		;;
+	restart)
+		readEnv
+		runCommandScript "restart"
+		;;
+	*)
+		echo "Error: unknown command '$command'"
+		printUsage
+		exit 1
+		;;
+esac
+
