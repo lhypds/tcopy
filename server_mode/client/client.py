@@ -16,9 +16,12 @@ load_dotenv()
 HEARTBEAT_TIMEOUT_SECONDS = 40
 
 logging.basicConfig(
-    filename="client.log",
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[
+        logging.FileHandler("client.log"),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -47,11 +50,10 @@ def connect_and_watch_events(base_url):
 
                             # Skip ###ALIVE### messages, only process actual content
                             if text == "###ALIVE###":
-                                logger.info("Heartbeat.")
+                                logger.debug("Heartbeat.")
                                 continue
 
                             # Copy content to clipboard
-                            logger.info("Received content, updating clipboard...")
                             content_replaced = (
                                 text.replace("\n", "<LF>")
                                 .replace("\r", "<CR>")
@@ -59,7 +61,7 @@ def connect_and_watch_events(base_url):
                                 .replace(" ", "<SPACE>")
                             )
                             pyperclip.copy(text)
-                            logger.info(f"Content copied: `{content_replaced}`")
+                            logger.info(f"Content received: `{content_replaced}`")
 
                         except json.JSONDecodeError as e:
                             logger.error(f"Error parsing JSON: {e}")
