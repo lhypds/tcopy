@@ -94,7 +94,7 @@ app.get('/sse', (req, res) => {
   console.log(`[${new Date().toISOString()}] Client connected to /sse endpoint.`);
 
   // Send an initial heartbeat to establish the connection
-  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
