@@ -5,5 +5,5 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-echo "$1" > clipboard.txt
+echo -n "$1" > clipboard.txt
 echo "Text written to clipboard.txt: $1"
