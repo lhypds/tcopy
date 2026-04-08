@@ -1,3 +1,7 @@
 # !/bin/bash
 
-bash serve_restart.sh
+# Enter server_mode/server/ directory
+cd server_mode/server/
+
+# Restart the server
+bash restart.sh

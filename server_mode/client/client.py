@@ -1,3 +1,5 @@
+# `tcopy` client, connects to `tcopy` server's SSE endpoint and updates clipboard on content changes. Written in Python using `requests` for SSE connection.
+
 import os
 import json
 import time
