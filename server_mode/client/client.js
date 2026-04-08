@@ -1,23 +1,45 @@
 // `tcopy` client — connects to `tcopy` server's SSE endpoint and updates
 // clipboard on content changes. Written in Node.js using EventSource for SSE.
-
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import clipboard from 'clipboardy';
 import 'dotenv/config';
-import { createLogger } from '../utils/logUtils.js';
 import { writeId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
+import { createLogger } from '../utils/logUtils.js';
+import { setupConnection } from '../utils/peerUtils.js';
+
+import wrtc from "@roamhq/wrtc";
+
+// Set WebRTC globals BEFORE loading peerjs
+globalThis.window = globalThis;
+globalThis.self = globalThis;
+
+globalThis.RTCPeerConnection = wrtc.RTCPeerConnection;
+globalThis.RTCSessionDescription = wrtc.RTCSessionDescription;
+globalThis.RTCIceCandidate = wrtc.RTCIceCandidate;
+globalThis.MediaStream = wrtc.MediaStream;
+
+if (!globalThis.navigator) {
+  globalThis.navigator = {};
+}
+if (!globalThis.navigator.mediaDevices) {
+  globalThis.navigator.mediaDevices = {};
+}
+
+// Dynamically import peerjs AFTER globals are ready
+const peerjsModule = await import("peerjs");
+const peerjs = peerjsModule.default ?? peerjsModule;
+const { Peer } = peerjs;
+
+const log = createLogger('client.log');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const idFile = path.join(__dirname, 'id');
 
 const HEARTBEAT_TIMEOUT = 40_000; // ms
 const RECONNECT_DELAY = 10_000; // ms
-const LOG_FILE = 'client.log';
-
-const log = createLogger(LOG_FILE);
 
 async function connectAndWatchEvents(baseUrl, id) {
   while (true) {
@@ -94,6 +116,42 @@ if (!baseUrl) {
 process.on('SIGINT', () => {
   log('info', 'Stopped by user.');
   process.exit(0);
+});
+
+// PeerJS client for WebRTC
+const url = new URL(baseUrl);
+const peer = new Peer(id, {
+  host: url.hostname,
+  port: url.port ? Number(url.port) : (url.protocol === "https:" ? 443 : 80),
+  path: "/signal",
+  secure: url.protocol === "https:",
+  wrtc,
+  config: {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+    ],
+  },
+});
+
+peer.on("open", (id) => {
+  log('info', `Ready for incoming connections. (ID: ${id})`);
+});
+
+peer.on("connection", (conn) => {
+  log('info', `Incoming connection from ${conn.peer}.`);
+  setupConnection(conn);
+});
+
+peer.on("error", (err) => {
+  log('error', `Peer error: ${err.message || err}`);
+});
+
+peer.on("disconnected", () => {
+  log('warn', "Disconnected from peer server.");
+});
+
+peer.on("close", () => {
+  log('warn', "Peer closed.");
 });
 
 connectAndWatchEvents(baseUrl, id);

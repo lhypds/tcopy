@@ -1,20 +1,20 @@
 import express from 'express';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { createLogger } from '../utils/logUtils.js';
 import { writeId } from '../utils/idUtils.js';
 import { ExpressPeerServer } from 'peer';
+import { createLogger } from '../utils/logUtils.js';
+
+const log = createLogger('server.log');
 
 // Load environment variables from .env file
 dotenv.config();
 
 const port = process.env.PORT || 5460;
 const outputFile = 'clipboard.txt';
-const logFile = 'server.log';
 const watchInterval = 300;
 const heartbeatIntervalMs = 30 * 1000;
 
-const log = createLogger(logFile);
 
 const app = express();
 app.use(express.json());
