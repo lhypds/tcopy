@@ -64,6 +64,10 @@ def connect_and_watch_events(base_url, id):
                                 logger.debug("Heartbeat.")
                                 continue
 
+                            if id == id_:
+                                logger.debug("Ignoring...")
+                                continue
+
                             # Copy content to clipboard
                             content_replaced = (
                                 text.replace("\n", "<LF>")
@@ -109,6 +113,7 @@ if __name__ == "__main__":
     id = write_id_file()
 
     base_url = os.getenv("SERVER_BASE_URL")
+    logger.info(f"Starting tcopy client (id: {id})...")
 
     if base_url is None:
         logger.error("Error: SERVER_BASE_URL not found in .env file")
