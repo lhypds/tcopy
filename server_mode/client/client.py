@@ -12,13 +12,13 @@ load_dotenv()
 HEARTBEAT_TIMEOUT_SECONDS = 40
 
 
-def connect_and_watch_events(url):
+def connect_and_watch_events(base_url):
     """Connect to SSE endpoint and update clipboard on content changes."""
     while True:
         try:
-            print(f"Connecting to SSE endpoint: {url}/sse")
+            print(f"Connecting to SSE endpoint: {base_url}/sse")
             with requests.get(
-                f"{url}/sse",
+                f"{base_url}/sse",
                 stream=True,
                 timeout=(10, HEARTBEAT_TIMEOUT_SECONDS),
             ) as response:
@@ -73,9 +73,9 @@ def connect_and_watch_events(url):
 if __name__ == "__main__":
     load_dotenv()
 
-    store = os.getenv('STORE')
+    base_url = os.getenv('SERVER_BASE_URL')
 
-    if store is None:
-        print("Error: STORE not found in .env file")
+    if base_url is None:
+        print("Error: SERVER_BASE_URL not found in .env file")
     else:
-        connect_and_watch_events(store)
+        connect_and_watch_events(base_url)

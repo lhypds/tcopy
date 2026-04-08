@@ -10,8 +10,8 @@ import logging
 # Load environment variables from .env file
 load_dotenv()
 
-# Convert the FILE_PATH to an absolute path if it's not already
-FILE_PATH = os.path.abspath(os.getenv("STORE", ""))
+# Convert the CLIPBOARD_FILE_PATH to an absolute path if it's not already
+clipboard_file_path = os.path.abspath(os.getenv("CLIPBOARD_FILE_PATH", ""))
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,7 @@ class FileChangeHandler(FileSystemEventHandler):
     file_inaccessible = False
 
     def on_modified(self, event):
-        if event.src_path == FILE_PATH:
+        if event.src_path == clipboard_file_path:
             current_time = time.time()
             if current_time - self.last_modified < 3:  # 3 seconds debounce
                 return
@@ -97,12 +97,12 @@ def watch_file(file_path):
 
 
 if __name__ == "__main__":
-    if FILE_PATH:
-        if os.path.exists(FILE_PATH):
-            watch_file(FILE_PATH)
+    if clipboard_file_path:
+        if os.path.exists(clipboard_file_path):
+            watch_file(clipboard_file_path)
         else:
             logging.error(
-                f"The file at {FILE_PATH} does not exist. Please check the path."
+                f"The file at {clipboard_file_path} does not exist. Please check the path."
             )
     else:
         logging.error("Please set the STORE variable in your .env file.")
