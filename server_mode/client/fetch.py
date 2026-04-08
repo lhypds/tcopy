@@ -1,10 +1,10 @@
 import os
 import requests
 import pyperclip
+
+
 from dotenv import load_dotenv
 
-
-# Load environment variables from .env file
 load_dotenv()
 
 
@@ -16,9 +16,14 @@ def fetch_and_copy_to_clipboard(base_url):
 
         # Get the content of the response
         content = response.text
-        
+
         # Print content
-        content_replaced = content.replace('\n', "<LF>").replace('\r', "<CR>").replace('\t', "<TAB>").replace(' ', "<SPACE>")
+        content_replaced = (
+            content.replace("\n", "<LF>")
+            .replace("\r", "<CR>")
+            .replace("\t", "<TAB>")
+            .replace(" ", "<SPACE>")
+        )
         print(f"Fetched content: `{content_replaced}`")
 
         # Copy the content to the clipboard
@@ -34,7 +39,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     # Get the URL from the SERVER_BASE_URL environment variable
-    base_url = os.getenv('SERVER_BASE_URL')
+    base_url = os.getenv("SERVER_BASE_URL")
 
     if base_url is None:
         print("Error: SERVER_BASE_URL not found in .env file")

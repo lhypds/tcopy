@@ -1,14 +1,17 @@
 import time
 import pyperclip
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from dotenv import load_dotenv
 import os
 import logging
 
 
-# Load environment variables from .env file
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+
+from dotenv import load_dotenv
+
 load_dotenv()
+
 
 # Convert the CLIPBOARD_FILE_PATH to an absolute path if it's not already
 clipboard_file_path = os.path.abspath(os.getenv("CLIPBOARD_FILE_PATH", ""))
