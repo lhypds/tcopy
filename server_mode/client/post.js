@@ -1,11 +1,12 @@
 // Send text (or current clipboard content) to the tcopy server.
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import clipboard from 'clipboardy';
 import 'dotenv/config';
+import { readId } from '../utils/idUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const idFile = path.join(__dirname, 'id');
 
 const REQUEST_TIMEOUT_MS = parseFloat(process.env.REQUEST_TIMEOUT_SECONDS ?? '5') * 1000;
 
@@ -24,11 +25,7 @@ async function postContent(url, content = null) {
   console.log(`Sending POST request to \`${url}\`.`);
 
   // Read client id
-  const idPath = path.join(__dirname, 'id');
-  let id = '';
-  try {
-    id = fs.readFileSync(idPath, 'utf-8').trim();
-  } catch { /* id stays empty if file absent */ }
+  const id = readId(idFile);
 
   const timestamp = String(Math.floor(Date.now() / 1000));
 

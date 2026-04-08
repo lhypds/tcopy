@@ -1,31 +1,23 @@
 // `tcopy` client — connects to `tcopy` server's SSE endpoint and updates
 // clipboard on content changes. Written in Node.js using EventSource for SSE.
 
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import clipboard from 'clipboardy';
 import 'dotenv/config';
 import { createLogger } from '../utils/logUtils.js';
+import { writeId } from '../utils/idUtils.js';
+import { sleep } from '../utils/sleepUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const idFile = path.join(__dirname, 'id');
 
 const HEARTBEAT_TIMEOUT = 40_000; // ms
 const RECONNECT_DELAY = 10_000; // ms
 const LOG_FILE = 'client.log';
 
 const log = createLogger(LOG_FILE);
-
-function writeIdFile() {
-  const id = String(Math.floor(Date.now() / 1000));
-  fs.writeFileSync(path.join(__dirname, 'id'), id, 'utf-8');
-  return id;
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 async function connectAndWatchEvents(baseUrl, id) {
   while (true) {
@@ -89,7 +81,7 @@ async function connectAndWatchEvents(baseUrl, id) {
   }
 }
 
-const id = writeIdFile();
+const id = writeId(idFile);
 const baseUrl = process.env.SERVER_BASE_URL;
 
 log('info', `Starting tcopy client (id: ${id})...`);

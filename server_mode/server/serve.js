@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { createLogger } from '../utils/logUtils.js';
+import { writeId } from '../utils/idUtils.js';
 
 const app = express();
 
@@ -124,13 +125,7 @@ app.get('/sse', (req, res) => {
   watchFileEvents(req, res);
 });
 
-const writeIdFile = () => {
-  const id = String(Math.floor(Date.now() / 1000));
-  fs.writeFileSync('id', id, 'utf8');
-  return id;
-};
 
-// Start the server
 app.listen(port, () => {
   // Ensure the output file exists
   if (!fs.existsSync(outputFile)) {
@@ -139,7 +134,7 @@ app.listen(port, () => {
   }
 
   // Write the id file
-  writeIdFile();
+  writeId('id');
 
   // Log server start message
   log('info', `Server is running at \`http://localhost:${port}\`.`);
