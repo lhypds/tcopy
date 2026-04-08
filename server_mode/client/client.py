@@ -34,6 +34,14 @@ def write_id_file():
     return id
 
 
+def interruptible_sleep(seconds):
+    """Sleep that exits cleanly on KeyboardInterrupt."""
+    try:
+        time.sleep(seconds)
+    except KeyboardInterrupt:
+        raise
+
+
 def connect_and_watch_events(base_url, id):
     """Connect to SSE endpoint and update clipboard on content changes."""
     while True:
@@ -85,11 +93,14 @@ def connect_and_watch_events(base_url, id):
                             logger.error(f"Error parsing JSON: {e}")
                             continue
 
+        except KeyboardInterrupt:
+            logger.info("Stopped by user.")
+            return
         except requests.exceptions.Timeout:
             logger.warning(
                 f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting ({RECONNECT_DELAY}s)..."
             )
-            time.sleep(RECONNECT_DELAY)
+            interruptible_sleep(RECONNECT_DELAY)
         except requests.exceptions.ConnectionError as e:
             if "Read timed out" in str(e):
                 logger.warning(
@@ -99,18 +110,15 @@ def connect_and_watch_events(base_url, id):
                 logger.warning(
                     f"Connection error: {e}. Reconnecting ({RECONNECT_DELAY}s)..."
                 )
-            time.sleep(RECONNECT_DELAY)
+            interruptible_sleep(RECONNECT_DELAY)
         except requests.exceptions.RequestException as e:
             logger.warning(f"Request error: {e}. Reconnecting ({RECONNECT_DELAY}s)...")
-            time.sleep(RECONNECT_DELAY)
-        except KeyboardInterrupt:
-            logger.info("Stopped by user.")
-            break
+            interruptible_sleep(RECONNECT_DELAY)
         except Exception as e:
             logger.exception(
                 f"Unexpected error: {e}. Reconnecting ({RECONNECT_DELAY}s)..."
             )
-            time.sleep(RECONNECT_DELAY)
+            interruptible_sleep(RECONNECT_DELAY)
 
 
 if __name__ == "__main__":
@@ -123,4 +131,7 @@ if __name__ == "__main__":
     if base_url is None:
         logger.error("Error: SERVER_BASE_URL not found in .env file")
     else:
-        connect_and_watch_events(base_url, id)
+        try:
+            connect_and_watch_events(base_url, id)
+        except KeyboardInterrupt:
+            logger.info("Stopped by user.")
