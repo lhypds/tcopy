@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-HEARTBEAT_TIMEOUT_SECONDS = 40
+HEARTBEAT_TIMEOUT = 40
+RECONNECT_DELAY = 30
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,7 +42,7 @@ def connect_and_watch_events(base_url, id):
                 f"{base_url}/sse",
                 params={"id": id},
                 stream=True,
-                timeout=(10, HEARTBEAT_TIMEOUT_SECONDS),
+                timeout=(10, HEARTBEAT_TIMEOUT),
             ) as response:
                 response.raise_for_status()
                 logger.info(f"Connected to SSE endpoint: {base_url}/sse?id={id}")
@@ -86,26 +87,30 @@ def connect_and_watch_events(base_url, id):
 
         except requests.exceptions.Timeout:
             logger.warning(
-                f"No heartbeat received for {HEARTBEAT_TIMEOUT_SECONDS} seconds. Reconnecting..."
+                f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting({RECONNECT_DELAY}s)..."
             )
-            time.sleep(2)
+            time.sleep(RECONNECT_DELAY)
         except requests.exceptions.ConnectionError as e:
             if "Read timed out" in str(e):
                 logger.warning(
-                    f"No heartbeat received for {HEARTBEAT_TIMEOUT_SECONDS} seconds. Reconnecting..."
+                    f"No heartbeat received for {HEARTBEAT_TIMEOUT} seconds. Reconnecting({RECONNECT_DELAY}s)..."
                 )
             else:
-                logger.warning(f"Connection error: {e}. Reconnecting...")
-            time.sleep(2)
+                logger.warning(
+                    f"Connection error: {e}. Reconnecting({RECONNECT_DELAY}s)..."
+                )
+            time.sleep(RECONNECT_DELAY)
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Request error: {e}. Reconnecting...")
-            time.sleep(2)
+            logger.warning(f"Request error: {e}. Reconnecting({RECONNECT_DELAY}s)...")
+            time.sleep(RECONNECT_DELAY)
         except KeyboardInterrupt:
             logger.info("Stopped by user.")
             break
         except Exception as e:
-            logger.exception(f"Unexpected error: {e}. Reconnecting...")
-            time.sleep(2)
+            logger.exception(
+                f"Unexpected error: {e}. Reconnecting({RECONNECT_DELAY}s)..."
+            )
+            time.sleep(RECONNECT_DELAY)
 
 
 if __name__ == "__main__":
