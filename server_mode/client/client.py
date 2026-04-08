@@ -26,17 +26,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def connect_and_watch_events(base_url):
+def write_id_file():
+    id = str(int(time.time()))
+    with open("id", "w", encoding="utf-8") as id_file:
+        id_file.write(id)
+    return id
+
+
+def connect_and_watch_events(base_url, id):
     """Connect to SSE endpoint and update clipboard on content changes."""
     while True:
         try:
             with requests.get(
                 f"{base_url}/sse",
+                params={"id": id},
                 stream=True,
                 timeout=(10, HEARTBEAT_TIMEOUT_SECONDS),
             ) as response:
                 response.raise_for_status()
-                logger.info(f"Connected to SSE endpoint: {base_url}/sse")
+                logger.info(f"Connected to SSE endpoint: {base_url}/sse?id={id}")
 
                 for line in response.iter_lines(decode_unicode=True):
                     if not line:
@@ -93,10 +101,11 @@ def connect_and_watch_events(base_url):
 
 if __name__ == "__main__":
     load_dotenv()
+    id = write_id_file()
 
     base_url = os.getenv("SERVER_BASE_URL")
 
     if base_url is None:
         logger.error("Error: SERVER_BASE_URL not found in .env file")
     else:
-        connect_and_watch_events(base_url)
+        connect_and_watch_events(base_url, id)

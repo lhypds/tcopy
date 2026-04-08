@@ -113,6 +113,12 @@ app.get('/sse', (req, res) => {
   watchFileEvents(req, res);
 });
 
+const writeIdFile = () => {
+  const id = String(Math.floor(Date.now() / 1000));
+  fs.writeFileSync('id', id, 'utf8');
+  return id;
+};
+
 // Start the server
 app.listen(port, () => {
   // Ensure the output file exists
@@ -120,6 +126,9 @@ app.listen(port, () => {
     console.log(`Output file "${outputFile}" does not exist. Creating it.`);
     fs.writeFileSync(outputFile, '', 'utf8');
   }
+
+  // Write the id file
+  writeIdFile();
 
   const endpoints = [
     { method: 'GET', path: '/' },
