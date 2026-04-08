@@ -3,8 +3,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import { createLogger } from '../utils/logUtils.js';
 import { writeId } from '../utils/idUtils.js';
-
-const app = express();
+import { ExpressPeerServer } from 'peer';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -17,6 +16,7 @@ const heartbeatIntervalMs = 30 * 1000;
 
 const log = createLogger(logFile);
 
+const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -30,6 +30,12 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// PeerJS signaling server for WebRTC
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+});
+app.use("/signal", peerServer);
 
 const fileWatcher = (filePath, interval = 300) => (req, res) => {
   if (!fs.existsSync(filePath)) {
