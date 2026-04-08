@@ -31,12 +31,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// PeerJS signaling server for WebRTC
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-});
-app.use("/signal", peerServer);
-
 const fileWatcher = (filePath, interval = 300) => (req, res) => {
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '', 'utf8');
@@ -131,8 +125,7 @@ app.get('/sse', (req, res) => {
   watchFileEvents(req, res);
 });
 
-
-app.listen(port, () => {
+const server = app.listen(port, () => {
   // Ensure the output file exists
   if (!fs.existsSync(outputFile)) {
     log('info', `Output file "${outputFile}" does not exist. Creating it.`);
@@ -150,6 +143,7 @@ app.listen(port, () => {
     { method: 'GET', path: '/' },
     { method: 'POST', path: '/' },
     { method: 'GET', path: '/sse' },
+    { method: 'GET', path: '/signal' },
   ]
   console.log('\nAvailable endpoints:');
   endpoints.forEach(endpoint => {
@@ -157,3 +151,11 @@ app.listen(port, () => {
   });
   console.log('');
 });
+
+// PeerJS signaling server for WebRTC
+// ExpressPeerServer needs the http.Server instance returned by app.listen()
+// so it must come after. That's the standard PeerJS pattern.
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+});
+app.use("/signal", peerServer);
