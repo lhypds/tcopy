@@ -1,4 +1,5 @@
 import os
+import time
 import argparse
 import pyperclip
 import requests
@@ -25,10 +26,20 @@ def post_content_to_server(url, content=None):
     print(f"Sending POST request to `{url}`.")
     timeout_seconds = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "5"))
 
+    # Get id
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    id_path = os.path.join(script_dir, "id")
+    try:
+        with open(id_path, "r", encoding="utf-8") as f:
+            id = f.read().strip()
+    except FileNotFoundError:
+        id = ""
+
+    timestamp = str(int(time.time()))
     try:
         response = requests.post(
             url,
-            json={"text": content_replaced},
+            json={"id": id, "text": content_replaced, "timestamp": timestamp},
             timeout=timeout_seconds,
         )
     except requests.exceptions.ConnectionError:

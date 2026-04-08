@@ -54,7 +54,10 @@ def connect_and_watch_events(base_url, id):
                         try:
                             json_str = line[6:]  # Remove 'data: ' prefix
                             data = json.loads(json_str)
+
+                            id_ = data.get("id", "")
                             text = data.get("text", "")
+                            timestamp = data.get("timestamp", "")
 
                             # Skip ###ALIVE### messages, only process actual content
                             if text == "###ALIVE###":
@@ -69,7 +72,9 @@ def connect_and_watch_events(base_url, id):
                                 .replace(" ", "<SPACE>")
                             )
                             pyperclip.copy(text)
-                            logger.info(f"Content received: `{content_replaced}`")
+                            logger.info(
+                                f"Content received (id: {id_}, timestamp: {timestamp}): `{content_replaced}`"
+                            )
 
                         except json.JSONDecodeError as e:
                             logger.error(f"Error parsing JSON: {e}")

@@ -5,5 +5,6 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-echo -n "$1" > clipboard.txt
+ID="$(cat id 2>/dev/null || echo "")"
+echo -n "###ID=${ID}###$1" > clipboard.txt
 echo "Text written to clipboard.txt: $1"

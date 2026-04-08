@@ -35,8 +35,13 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
       if (err) {
         return;
       }
+
+      // Extract id from the data
+      const id = data.match(/###ID=(.*?)###/)?.[1] || null;
+      const text = data.replace(`###ID=${id}###`, '');
+
       console.log(`[${new Date().toISOString()}] File changed, sending new content to client.`);
-      res.write(`data: ${JSON.stringify({ text: data || '', timestamp: new Date().toISOString() })}\n\n`);
+      res.write(`data: ${JSON.stringify({ id: id, text: text || '', timestamp: new Date().toISOString() })}\n\n`);
     });
   };
 
@@ -57,16 +62,17 @@ const watchFileEvents = fileWatcher(outputFile, watchInterval);
 // Route to replace text input in a file
 // Input is JSON, for example: { "text": "Hello, World!" }
 app.post('/', (req, res) => {
-  const textInput = req.body && req.body.text;
-  if (textInput) {
-    // Log the received text input to the console
-    console.log(`Received text: ${textInput}`);
+  const { id, text, timestamp } = req.body || {};
 
-    fs.writeFile(outputFile, textInput, (err) => {
+  if (text) {
+    // Log the received text input to the console
+    console.log(`Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
+
+    fs.writeFile(outputFile, `###ID=${id}###` + text, (err) => {
       if (err) {
         res.status(500).send('Error saving the text');
       } else {
-        res.send('Text saved: `' + textInput + '`');
+        res.send('Text saved: `' + text + '`');
       }
     });
   } else {
