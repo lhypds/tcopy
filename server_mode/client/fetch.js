@@ -74,5 +74,6 @@ if (text.startsWith("+file") || text.startsWith("+image")) {
 }
 
 if (!success) {
+  console.error("Error: failed to fetch remote file.");
   process.exit(1);
 }

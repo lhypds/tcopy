@@ -25,7 +25,7 @@ export async function fetchRemoteClipboard(url) {
     const content = await response.text();
 
     // Print fetched content
-    const contentReplaced = remoteClipboardResult.content
+    const contentReplaced = content
       .replace(/\n/g, '<LF>')
       .replace(/\r/g, '<CR>')
       .replace(/\t/g, '<TAB>')
@@ -34,7 +34,7 @@ export async function fetchRemoteClipboard(url) {
 
     return {
       success: true,
-      content,
+      content: content,
     };
   } catch (error) {
     return {
