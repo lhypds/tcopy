@@ -55,38 +55,32 @@ fi
 if [ -f "$ENV_FILE" ]; then
   # Setup ENVIRONMENT
   current_environment="$(read_env_value "ENVIRONMENT" "$ENV_FILE")"
-  if [ -n "$current_environment" ]; then
-    read -rp "Enter ENVIRONMENT ([s]erver/[c]lient, current: $current_environment): " input_environment
-  else
+  if [ -z "$current_environment" ]; then
     read -rp "Enter ENVIRONMENT ([s]erver/[c]lient): " input_environment
-  fi
 
-  if [ -z "$input_environment" ]; then
-    if [ -n "$current_environment" ]; then
-      input_environment="$current_environment"
-    else
+    if [ -z "$input_environment" ]; then
       echo "Error: ENVIRONMENT cannot be empty."
       exit 1
     fi
+
+    case "$input_environment" in
+      s|S|server|SERVER)
+        input_environment="server"
+        ;;
+      c|C|client|CLIENT)
+        input_environment="client"
+        ;;
+    esac
+
+    if [ "$input_environment" != "server" ] && [ "$input_environment" != "client" ]; then
+      echo "Error: ENVIRONMENT must be either 'server' or 'client'."
+      exit 1
+    fi
+
+    set_env_value "ENVIRONMENT" "$input_environment" "$ENV_FILE"
+    echo "ENVIRONMENT set to: $input_environment"
+    current_environment="$input_environment"
   fi
-
-  case "$input_environment" in
-    s|S|server|SERVER)
-      input_environment="server"
-      ;;
-    c|C|client|CLIENT)
-      input_environment="client"
-      ;;
-  esac
-
-  if [ "$input_environment" != "server" ] && [ "$input_environment" != "client" ]; then
-    echo "Error: ENVIRONMENT must be either 'server' or 'client'."
-    exit 1
-  fi
-
-  set_env_value "ENVIRONMENT" "$input_environment" "$ENV_FILE"
-  echo "ENVIRONMENT set to: $input_environment"
-  current_environment="$input_environment"
 
   # Setup SERVER_BASE_URL for client
   if [ "$current_environment" = "client" ]; then
