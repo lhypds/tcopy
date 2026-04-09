@@ -1,16 +1,18 @@
 import express from 'express';
 import fs from 'fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { writeId } from '../utils/idUtils.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 // Logger
 const log = createLogger('server.log');
-
-// Load environment variables from .env file
-dotenv.config();
 
 const port = process.env.PORT || 5460;
 const clipboardFile = 'clipboard.txt';

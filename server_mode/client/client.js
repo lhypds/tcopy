@@ -2,12 +2,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import clipboard from 'clipboardy';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { writeId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
 import { setupConnection } from '../utils/peerUtils.js';
 import express from 'express';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 import wrtc from "@roamhq/wrtc";
 
@@ -31,8 +34,6 @@ if (!globalThis.navigator.mediaDevices) {
 const peerjsModule = await import("peerjs");
 const peerjs = peerjsModule.default ?? peerjsModule;
 const { Peer } = peerjs;
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const HEARTBEAT_TIMEOUT = 40_000; // ms
 const RECONNECT_DELAY = 10_000; // ms

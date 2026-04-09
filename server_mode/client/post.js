@@ -1,11 +1,12 @@
 // Send text (or current clipboard content) to the tcopy server.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { readId } from '../utils/idUtils.js';
 import { readClipboard } from '../utils/clipboardUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const REQUEST_TIMEOUT_MS = parseFloat(process.env.REQUEST_TIMEOUT_SECONDS ?? '5') * 1000;
 
