@@ -12,12 +12,13 @@ export function writeId(filePath) {
 
 /**
  * Reads an ID from the given file path.
- * Returns the trimmed string, or an empty string if the file is absent.
+ * If the file doesn't exist, creates one with a new ID and returns it.
  */
 export function readId(filePath) {
   try {
     return fs.readFileSync(filePath, 'utf-8').trim();
   } catch {
-    return '';
+    // If file doesn't exist, create it with a new ID
+    return writeId(filePath);
   }
 }
