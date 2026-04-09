@@ -59,7 +59,7 @@ async function postContent(url, content) {
     if (e.name === 'AbortError') {
       console.error(`Error: Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds.`);
     } else {
-      console.error('Error: Cannot connect to server.');
+      console.error('Error: cannot connect to server.');
     }
     return false;
   }
