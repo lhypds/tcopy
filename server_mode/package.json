@@ -4,8 +4,8 @@
   "description": "Copy and paste from any machine to any machine.",
   "type": "module",
   "scripts": {
-    "start:server": "node serve.js",
-    "start:client": "node client.js",
+    "start:server": "cd server && node serve.js",
+    "start:client": "cd client && node client.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "gcc³",
