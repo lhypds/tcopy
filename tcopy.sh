@@ -86,29 +86,84 @@ writeEnv() {
 	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
 }
 
-readEnv() {
-	local mode_option="${1:-}"
+resetEnv() {
+	mode=""
+	environment=""
+	server_base_url=""
 
-	if [[ "$mode_option" == "reset" ]]; then
-		mode=""
-		environment=""
-		server_base_url=""
-	else
-		mode="$(_read_env_value "MODE" "$ENV_FILE")"
-		if [[ "$mode" == "server" ]]; then
-			environment="$(_read_env_value "ENVIRONMENT" "$SCRIPT_DIR/server_mode/.env")"
-			if [[ "$environment" == "client" ]]; then
-				server_base_url="$(_read_env_value "SERVER_BASE_URL" "$SCRIPT_DIR/server_mode/.env")"
-			else
-				server_base_url=""
-			fi
-		elif [[ "$mode" == "file" ]]; then
-			environment="file"
-			server_base_url=""
+	local tmp_file
+	local server_env_file="$SCRIPT_DIR/server_mode/.env"
+
+	# Reset MODE in .env
+	if [ ! -f "$ENV_FILE" ]; then
+		if [ -f "$SCRIPT_DIR/.env.example" ]; then
+			cp "$SCRIPT_DIR/.env.example" "$ENV_FILE"
 		else
-			environment=""
+			touch "$ENV_FILE"
+		fi
+	fi
+
+	tmp_file="${ENV_FILE}.tmp"
+	awk -v k="MODE" -v v="" '
+		BEGIN { updated = 0 }
+		$0 ~ "^[[:space:]]*" k "=" {
+			if (!updated) {
+				print k "=" v
+				updated = 1
+			}
+			next
+		}
+		{ print }
+		END {
+			if (!updated) {
+				print k "=" v
+			}
+		}
+	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
+
+	# Reset ENVIRONMENT in server_mode/.env
+	if [ ! -f "$server_env_file" ]; then
+		if [ -f "$SCRIPT_DIR/server_mode/.env.example" ]; then
+			cp "$SCRIPT_DIR/server_mode/.env.example" "$server_env_file"
+		else
+			touch "$server_env_file"
+		fi
+	fi
+
+	tmp_file="${server_env_file}.tmp"
+	awk -v k="ENVIRONMENT" -v v="" '
+		BEGIN { updated = 0 }
+		$0 ~ "^[[:space:]]*" k "=" {
+			if (!updated) {
+				print k "=" v
+				updated = 1
+			}
+			next
+		}
+		{ print }
+		END {
+			if (!updated) {
+				print k "=" v
+			}
+		}
+	' "$server_env_file" > "$tmp_file" && mv "$tmp_file" "$server_env_file"
+}
+
+readEnv() {
+	mode="$(_read_env_value "MODE" "$ENV_FILE")"
+	if [[ "$mode" == "server" ]]; then
+		environment="$(_read_env_value "ENVIRONMENT" "$SCRIPT_DIR/server_mode/.env")"
+		if [[ "$environment" == "client" ]]; then
+			server_base_url="$(_read_env_value "SERVER_BASE_URL" "$SCRIPT_DIR/server_mode/.env")"
+		else
 			server_base_url=""
 		fi
+	elif [[ "$mode" == "file" ]]; then
+		environment="file"
+		server_base_url=""
+	else
+		environment=""
+		server_base_url=""
 	fi
 
 	if [[ "$mode" != "file" && "$mode" != "server" ]]; then
@@ -194,7 +249,8 @@ case "$command" in
 		runUpdate
 		;;
 	setup)
-		readEnv "reset"
+		resetEnv
+		readEnv
 		runCommandScript "setup"
 		;;
 	info)
