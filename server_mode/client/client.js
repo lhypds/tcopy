@@ -38,6 +38,8 @@ const { Peer } = peerjs;
 const HEARTBEAT_TIMEOUT = 40_000; // ms
 const RECONNECT_DELAY = 10_000; // ms
 
+const id = writeId(path.join(__dirname, 'id'));
+
 // Logger
 const log = createLogger('client.log');
 
@@ -46,7 +48,6 @@ log('info', `Starting tcopy client (id: ${id})...`);
 // Client local server port
 const port = process.env.PORT || 5461;
 
-const id = writeId(path.join(__dirname, 'id'));
 const baseUrl = process.env.SERVER_BASE_URL;
 
 if (!baseUrl) {
