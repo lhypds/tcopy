@@ -8,21 +8,28 @@ import fs from 'fs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
+// Remote server base URL
 const baseUrl = process.env.SERVER_BASE_URL;
 if (!baseUrl) {
   console.error('Error: SERVER_BASE_URL not found in .env file');
   process.exit(1);
 }
 
+// Client server port
+const port = process.env.PORT || 5460;
+
 async function fetchFile(fromPeerId, filePath, pasteTo) {
   // Trigger paste
-  const response = await fetch("/paste", {
+  const response = await fetch(`http://localhost:${port}/paste`, {
     method: "POST",
-    body: {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
       fromPeerId: fromPeerId,
       filePath: filePath,
       pasteTo: pasteTo,
-    }
+    })
   });
 
   if (!response.ok) {

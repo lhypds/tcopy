@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { writeId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
-import { setupConnection } from '../utils/peerUtils.js';
+import { setupConnection, connectToPeer } from '../utils/peerUtils.js';
 import express from 'express';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -85,7 +85,7 @@ peer.on("connection", (conn) => {
 });
 
 peer.on("error", (err) => {
-  log('error', `Peer error: ${err.message || err}`);
+  log('error', `Peer error. ${err.message || err}`);
 });
 
 peer.on("disconnected", () => {
@@ -127,11 +127,29 @@ app.listen(port, () => {
   console.log('');
 });
 
+
+
 // Route to get the content of the file
-app.get('/paste', (req, res) => {
+app.post('/paste', async (req, res) => {
   // Trigger paste
-  const { fromPeerId, toPath } = req.body || {};
-  peer.connect(fromPeerId);
+  const { fromPeerId, filePath, pasteTo } = req.body || {};
+
+  // Log the paste request
+  log('info', `Received paste request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
+
+  if (!fromPeerId) {
+    log('warn', 'Paste request missing fromPeerId.');
+    return res.status(400).json({ success: false, error: 'fromPeerId is required' });
+  }
+
+  // Connect to the peer to trigger file transfer
+  try {
+    await connectToPeer(peer, fromPeerId);
+    return res.json({ success: true });
+  } catch (error) {
+    log('error', `Failed to connect to peer ${fromPeerId}: ${error.message || error}`);
+    return res.status(500).json({ success: false, error: 'Failed to connect to peer' });
+  }
 });
 
 // Connect SSE

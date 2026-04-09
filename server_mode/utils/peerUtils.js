@@ -56,6 +56,54 @@ export function setupConnection(conn) {
   return conn;
 }
 
+export function connectToPeer(peer, fromPeerId, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const conn = peer.connect(fromPeerId);
+    if (!conn) {
+      reject(new Error('peer.connect returned no connection'));
+      return;
+    }
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      conn.off?.('open', onOpen);
+      conn.off?.('error', onError);
+    };
+
+    const onOpen = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve();
+    };
+
+    const onError = (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      reject(error instanceof Error ? error : new Error(String(error)));
+    };
+
+    const timer = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      reject(new Error(`Peer connection timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    conn.once('open', onOpen);
+    conn.once('error', onError);
+  });
+}
+
 export async function handleIncomingData(conn, data) {
   const peerId = conn.peer;
   let transfer = incomingTransfers.get(peerId);
