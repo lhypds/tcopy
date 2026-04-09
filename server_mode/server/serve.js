@@ -1,21 +1,22 @@
 import express from 'express';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { writeId } from '../utils/idUtils.js';
+import { readContent, writeId } from '../utils/idUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
 
+// Logger
 const log = createLogger('server.log');
 
 // Load environment variables from .env file
 dotenv.config();
 
 const port = process.env.PORT || 5460;
-const outputFile = 'clipboard.txt';
+const clipboardFile = 'clipboard.txt';
 const watchInterval = 300;
 const heartbeatIntervalMs = 30 * 1000;
 
-
+// Express server
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -43,8 +44,8 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
       }
 
       // Extract id from the data
-      const id = data.match(/###ID=(.*?)###/)?.[1] || null;
-      const text = data.replace(`###ID=${id}###`, '');
+      const content = data;
+      const { id, text } = readContent(content);
 
       log('info', 'File changed, sending new content to client.');
       res.write(`data: ${JSON.stringify({ id: id, text: text || '', timestamp: new Date().toISOString() })}\n\n`);
@@ -63,7 +64,7 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
     res.end();
   });
 };
-const watchFileEvents = fileWatcher(outputFile, watchInterval);
+const watchFileEvents = fileWatcher(clipboardFile, watchInterval);
 
 // Route to replace text input in a file
 // Input is JSON, for example: { "text": "Hello, World!" }
@@ -74,7 +75,7 @@ app.post('/', (req, res) => {
     // Log the received text input to the console
     log('info', `Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
 
-    fs.writeFile(outputFile, `###ID=${id}###` + text, (err) => {
+    fs.writeFile(clipboardFile, `###ID=${id}###` + text, (err) => {
       if (err) {
         res.status(500).send('Error saving the text');
       } else {
@@ -88,11 +89,11 @@ app.post('/', (req, res) => {
 
 // Route to get the content of the file
 app.get('/', (req, res) => {
-  if (!fs.existsSync(outputFile)) {
+  if (!fs.existsSync(clipboardFile)) {
     return res.send('');
   }
 
-  fs.readFile(outputFile, 'utf8', (err, data) => {
+  fs.readFile(clipboardFile, 'utf8', (err, data) => {
     if (err) {
       res.status(500).send('Error reading the file');
     } else {
@@ -126,10 +127,10 @@ app.get('/sse', (req, res) => {
 });
 
 const server = app.listen(port, () => {
-  // Ensure the output file exists
-  if (!fs.existsSync(outputFile)) {
-    log('info', `Output file "${outputFile}" does not exist. Creating it.`);
-    fs.writeFileSync(outputFile, '', 'utf8');
+  // Ensure the clipboard file exists
+  if (!fs.existsSync(clipboardFile)) {
+    log('info', `Output file "${clipboardFile}" does not exist. Creating it.`);
+    fs.writeFileSync(clipboardFile, '', 'utf8');
   }
 
   // Write the id file

@@ -1,5 +1,3 @@
-// `tcopy` client — connects to `tcopy` server's SSE endpoint and updates
-// clipboard on content changes. Written in Node.js using EventSource for SSE.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
@@ -9,6 +7,7 @@ import { writeId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
 import { setupConnection } from '../utils/peerUtils.js';
+import express from 'express';
 
 import wrtc from "@roamhq/wrtc";
 
@@ -33,80 +32,21 @@ const peerjsModule = await import("peerjs");
 const peerjs = peerjsModule.default ?? peerjsModule;
 const { Peer } = peerjs;
 
-const log = createLogger('client.log');
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const idFile = path.join(__dirname, 'id');
 
 const HEARTBEAT_TIMEOUT = 40_000; // ms
 const RECONNECT_DELAY = 10_000; // ms
 
-async function connectAndWatchEvents(baseUrl, id) {
-  while (true) {
-    await new Promise(resolve => {
-      let heartbeatTimer;
-
-      function resetHeartbeat() {
-        clearTimeout(heartbeatTimer);
-        heartbeatTimer = setTimeout(() => {
-          log('warning', `No heartbeat received for ${HEARTBEAT_TIMEOUT / 1000}s. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
-          es.close();
-          resolve();
-        }, HEARTBEAT_TIMEOUT);
-      }
-
-      const es = new EventSource(`${baseUrl}/sse?id=${encodeURIComponent(id)}`);
-
-      es.onopen = () => {
-        log('info', `Connected to SSE endpoint: ${baseUrl}/sse?id=${id}`);
-        resetHeartbeat();
-      };
-
-      es.onmessage = async event => {
-        resetHeartbeat();
-        try {
-          const data = JSON.parse(event.data);
-          const { id: id_, text = '', timestamp = '' } = data;
-
-          if (text === '###ALIVE###') {
-            log('debug', 'Heartbeat.');
-            return;
-          }
-
-          if (id === id_) {
-            log('debug', 'Ignored as sent by self.');
-            return;
-          }
-
-          const contentReplaced = text
-            .replace(/\n/g, '<LF>')
-            .replace(/\r/g, '<CR>')
-            .replace(/\t/g, '<TAB>')
-            .replace(/ /g, '<SPACE>');
-
-          await clipboard.write(text);
-          log('info', `Content received (id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
-        } catch (e) {
-          log('error', `Error parsing data: ${e.message}`);
-        }
-      };
-
-      es.onerror = () => {
-        clearTimeout(heartbeatTimer);
-        log('warning', `Connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
-        es.close();
-        resolve();
-      };
-    });
-
-    await sleep(RECONNECT_DELAY);
-  }
-}
-
-const id = writeId(idFile);
-const baseUrl = process.env.SERVER_BASE_URL;
+// Logger
+const log = createLogger('client.log');
 
 log('info', `Starting tcopy client (id: ${id})...`);
+
+// Client local server port
+const port = process.env.PORT || 5461;
+
+const id = writeId(path.join(__dirname, 'id'));
+const baseUrl = process.env.SERVER_BASE_URL;
 
 if (!baseUrl) {
   log('error', 'SERVER_BASE_URL not found in .env file');
@@ -153,5 +93,105 @@ peer.on("disconnected", () => {
 peer.on("close", () => {
   log('warn', "Peer closed.");
 });
+
+// Express server (client local server)
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  const startTime = Date.now();
+
+  res.on('finish', () => {
+    const durationMs = Date.now() - startTime;
+    log('info', `${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms`);
+  });
+
+  next();
+});
+
+app.listen(port, () => {
+  // Log server start message
+  log('info', `Server (client local server) is running at \`http://localhost:${port}\`.`);
+
+  // Print available endpoints
+  const endpoints = [
+    { method: 'POST', path: '/paste' },
+  ]
+  console.log('\nAvailable endpoints:');
+  endpoints.forEach(endpoint => {
+    console.log(`- ${endpoint.method} ${endpoint.path}`);
+  });
+  console.log('');
+});
+
+// Route to get the content of the file
+app.get('/paste', (req, res) => {
+  // Trigger paste
+  const { fromPeerId, toPath } = req.body || {};
+  peer.connect(fromPeerId);
+});
+
+// Connect SSE
+async function connectAndWatchEvents(baseUrl, id) {
+  while (true) {
+    await new Promise(resolve => {
+      let heartbeatTimer;
+
+      function resetHeartbeat() {
+        clearTimeout(heartbeatTimer);
+        heartbeatTimer = setTimeout(() => {
+          log('warning', `No heartbeat received for ${HEARTBEAT_TIMEOUT / 1000}s. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+          es.close();
+          resolve();
+        }, HEARTBEAT_TIMEOUT);
+      }
+
+      const es = new EventSource(`${baseUrl}/sse?id=${encodeURIComponent(id)}`);
+      es.onopen = () => {
+        log('info', `Connected to SSE endpoint: ${baseUrl}/sse?id=${id}`);
+        resetHeartbeat();
+      };
+
+      es.onmessage = async event => {
+        resetHeartbeat();
+        try {
+          const data = JSON.parse(event.data);
+          const { id: id_, text = '', timestamp = '' } = data;
+
+          if (text === '###ALIVE###') {
+            log('debug', 'Heartbeat.');
+            return;
+          }
+
+          if (id === id_) {
+            log('debug', 'Ignored as sent by self.');
+            return;
+          }
+
+          const contentReplaced = text
+            .replace(/\n/g, '<LF>')
+            .replace(/\r/g, '<CR>')
+            .replace(/\t/g, '<TAB>')
+            .replace(/ /g, '<SPACE>');
+
+          await clipboard.write(text);
+          log('info', `Content received (id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
+        } catch (e) {
+          log('error', `Error parsing data: ${e.message}`);
+        }
+      };
+
+      es.onerror = () => {
+        clearTimeout(heartbeatTimer);
+        log('warning', `Connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+        es.close();
+        resolve();
+      };
+    });
+
+    await sleep(RECONNECT_DELAY);
+  }
+}
 
 connectAndWatchEvents(baseUrl, id);

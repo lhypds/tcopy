@@ -10,7 +10,7 @@ environment=""
 command="${1:-}"
 
 printUsage() {
-	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|status|-v|--version|-h|--help]"
+	echo "Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|status|-v|--version|-h|--help]"
 }
 
 if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
@@ -255,10 +255,14 @@ case "$command" in
 		readEnv
 		runCommandScript "restart"
 		;;
-  "")
+    copy|"")
 		readEnv
 		runCommandScript "copy"
-    ;;
+    	;;
+	paste)
+	    readEnv
+		runCommandScript "paste"
+		;;
 	*)
 		readEnv
 		runCommandScript "copy" "$@"

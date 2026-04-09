@@ -1,6 +1,8 @@
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
+import { readClipboard } from '../utils/clipboardUtils.js'
 
+// Logger
 const log = createLogger('peer.log');
 
 const connections = new Map();
@@ -29,9 +31,12 @@ export function setupConnection(conn) {
   }
 
   connections.set(conn.peer, conn);
-
   conn.on("open", () => {
     log('info', `Connection open with ${conn.peer}`);
+
+    // Send anything in clipboard buffer (file or content)
+    const clipboard = readClipboard();
+    conn.send(clipboard);
   });
 
   conn.on("close", () => {
@@ -115,7 +120,6 @@ export async function sendFile(conn, file) {
   }
 
   log('info', `Sending "${file.name}" to ${conn.peer} (${file.size} bytes)`);
-
   conn.send({
     type: "file-info",
     name: file.name,
@@ -124,7 +128,6 @@ export async function sendFile(conn, file) {
   });
 
   let offset = 0;
-
   while (offset < file.size) {
     const chunk = file.slice(offset, offset + CHUNK_SIZE);
     const buffer = await chunk.arrayBuffer();

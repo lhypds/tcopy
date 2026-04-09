@@ -11,6 +11,7 @@
     "clipboardy": "^4.0.0",
     "dotenv": "^16.0.0",
     "eventsource": "^2.0.0",
-    "peerjs": "^1.5.5"
+    "peerjs": "^1.5.5",
+    "express": "^4.21.1"
   }
 }

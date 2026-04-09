@@ -1,20 +1,23 @@
 // Send text (or current clipboard content) to the tcopy server.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import clipboard from 'clipboardy';
 import 'dotenv/config';
 import { readId } from '../utils/idUtils.js';
+import { readClipboard } from '../utils/clipboardUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const idFile = path.join(__dirname, 'id');
 
 const REQUEST_TIMEOUT_MS = parseFloat(process.env.REQUEST_TIMEOUT_SECONDS ?? '5') * 1000;
 
-async function postContent(url, content = null) {
-  if (content === null) {
-    content = await clipboard.read();
-  }
+const args = process.argv.slice(2);
+const baseUrl = process.env.SERVER_BASE_URL;
 
+if (!baseUrl) {
+  console.error('Error: SERVER_BASE_URL not found in .env file');
+  process.exit(1);
+}
+
+async function postContent(url, content) {
   const contentReplaced = content
     .replace(/\n/g, '<LF>')
     .replace(/\r/g, '<CR>')
@@ -25,8 +28,7 @@ async function postContent(url, content = null) {
   console.log(`Sending POST request to \`${url}\`.`);
 
   // Read client id
-  const id = readId(idFile);
-
+  const id = readId(path.join(__dirname, 'id'));
   const timestamp = String(Math.floor(Date.now() / 1000));
 
   const controller = new AbortController();
@@ -62,14 +64,6 @@ async function postContent(url, content = null) {
   }
 }
 
-const args = process.argv.slice(2);
-const serverBaseUrl = process.env.SERVER_BASE_URL;
-
-if (!serverBaseUrl) {
-  console.error('Error: SERVER_BASE_URL not found in .env file');
-  process.exit(1);
-}
-
-const content = args.length > 0 ? args.join(' ').trim() : null;
-const success = await postContent(serverBaseUrl, content);
+const content = args.length > 0 ? args.join(' ').trim() : readClipboard();
+const success = await postContent(baseUrl, content);
 if (!success) process.exit(1);
