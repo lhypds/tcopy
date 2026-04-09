@@ -271,11 +271,11 @@ case "$command" in
 		;;
     copy|"")
 		readEnv
-		runCommandScript "copy"
+		runCommandScript "copy" "${@:2}"
     	;;
 	paste)
 	    readEnv
-		runCommandScript "paste"
+		runCommandScript "paste" "${@:2}"
 		;;
 	*)
 		readEnv

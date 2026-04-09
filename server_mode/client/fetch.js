@@ -43,6 +43,9 @@ console.log(`Parsed clipboard content: id=\`${id}\`, text=\`${text}\``);
 
 const args = process.argv.slice(2);
 
+// ---- pasting remote clipboard text to local clipboard -------------
+
+// Has no argument.
 // e.g., `node fetch.js`
 if (args.length == 0) {
   console.log("Pasting to clipboard...");
@@ -52,6 +55,10 @@ if (args.length == 0) {
   process.exit(0);
 }
 
+// ---- pasting a file to local path ---------------------------------
+
+// Has a argument.
+// e.g., `node fetch.js /path/to/destination`
 const pasteTo = resolvePath(args[0]);
 console.log("Pasting to path:", pasteTo);
 
@@ -61,7 +68,6 @@ if (pasteTo && !fs.existsSync(pasteTo)) {
   process.exit(1);
 }
 
-// e.g., `node fetch.js /path/to/destination`
 let success = true;
 if (text.startsWith("+file") || text.startsWith("+image")) {
   // Fetch remote file
