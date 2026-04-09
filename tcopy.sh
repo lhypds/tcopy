@@ -7,6 +7,7 @@ ENV_FILE="$SCRIPT_DIR/.env"
 
 mode=""
 environment=""
+server_base_url=""
 command="${1:-}"
 
 printUsage() {
@@ -54,26 +55,6 @@ _choose_mode() {
 	done
 }
 
-_choose_environment_for_server() {
-	while true; do
-		printf "Choose ENVIRONMENT for server mode ([s]erver/[c]lient): "
-		read -r answer
-		case "${answer}" in
-			s|S|server|SERVER)
-				environment="server"
-				break
-				;;
-			c|C|client|CLIENT)
-				environment="client"
-				break
-				;;
-			*)
-				echo "Invalid ENVIRONMENT. Please choose 'server' or 'client'."
-				;;
-		esac
-	done
-}
-
 writeEnv() {
 	local tmp_file
 
@@ -103,23 +84,6 @@ writeEnv() {
 			}
 		}
 	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
-
-	awk -v k="ENVIRONMENT" -v v="$environment" '
-		BEGIN { updated = 0 }
-		$0 ~ "^[[:space:]]*" k "=" {
-			if (!updated) {
-				print k "=" v
-				updated = 1
-			}
-			next
-		}
-		{ print }
-		END {
-			if (!updated) {
-				print k "=" v
-			}
-		}
-	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
 }
 
 readEnv() {
@@ -128,28 +92,27 @@ readEnv() {
 	if [[ "$mode_option" == "reset" ]]; then
 		mode=""
 		environment=""
+		server_base_url=""
 	else
 		mode="$(_read_env_value "MODE" "$ENV_FILE")"
-		environment="$(_read_env_value "ENVIRONMENT" "$ENV_FILE")"
-	fi
-
-	if [[ "$mode_option" == "nochoose" ]]; then
-		if [[ "$mode" == "file" ]]; then
+		if [[ "$mode" == "server" ]]; then
+			environment="$(_read_env_value "ENVIRONMENT" "$SCRIPT_DIR/server_mode/.env")"
+			if [[ "$environment" == "client" ]]; then
+				server_base_url="$(_read_env_value "SERVER_BASE_URL" "$SCRIPT_DIR/server_mode/.env")"
+			else
+				server_base_url=""
+			fi
+		elif [[ "$mode" == "file" ]]; then
 			environment="file"
+			server_base_url=""
+		else
+			environment=""
+			server_base_url=""
 		fi
-		return 0
 	fi
 
 	if [[ "$mode" != "file" && "$mode" != "server" ]]; then
 		_choose_mode
-	fi
-
-	if [[ "$mode" == "file" ]]; then
-		environment="file"
-	else
-		if [[ "$environment" != "server" && "$environment" != "client" ]]; then
-			_choose_environment_for_server
-		fi
 	fi
 
 	writeEnv
@@ -161,16 +124,7 @@ resolveTargetDir() {
 	if [[ "$mode" == "file" ]]; then
 		target_dir="$SCRIPT_DIR/file_mode"
 	elif [[ "$mode" == "server" ]]; then
-		if [[ "$environment" == "server" ]]; then
-			target_dir="$SCRIPT_DIR/server_mode/server"
-		else
-			target_dir="$SCRIPT_DIR/server_mode/client"
-		fi
-	fi
-
-	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
-		echo "Error: target directory not found for MODE=$mode ENVIRONMENT=$environment"
-		exit 1
+		target_dir="$SCRIPT_DIR/server_mode"
 	fi
 
 	echo "$target_dir"
@@ -214,10 +168,14 @@ runUpdate() {
 }
 
 showInfo() {
-	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
-  echo "Current mode: $mode"
-  if [[ "$mode" == "server" ]]; then
-    echo "Current envrionment: $environment"
+    echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
+    echo "Current mode: $mode"
+	
+    if [[ "$mode" == "server" ]]; then
+	    echo "Current environment: $environment"
+	if [[ "$environment" == "client" && -n "$server_base_url" ]]; then
+		echo "Server base URL: $server_base_url"
+	fi
   fi
 }
 
@@ -237,7 +195,7 @@ case "$command" in
 		;;
 	setup)
 		readEnv "reset"
-		runRootScript "setup" "$(resolveTargetDir)"
+		runCommandScript "setup"
 		;;
 	info)
 		readEnv "nochoose"

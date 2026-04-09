@@ -15,13 +15,14 @@ function getEnvVar(key) {
 }
 
 const PM2_NAME = getEnvVar("PM2_NAME");
+const ENVIRONMENT = getEnvVar("ENVIRONMENT");
 
 module.exports = {
   apps: [
     {
-      name: PM2_NAME || "tcopy-client",
+      name: PM2_NAME || "tcopy",
       script: "npm",
-      args: "start",
+      args: ENVIRONMENT === "server" ? "run start:server" : "run start:client",
     },
   ],
 };

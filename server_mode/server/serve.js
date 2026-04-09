@@ -1,7 +1,8 @@
 import express from 'express';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { readContent, writeId } from '../utils/idUtils.js';
+import { writeId } from '../utils/idUtils.js';
+import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
 
@@ -44,8 +45,8 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
       }
 
       // Extract id from the data
-      const content = data;
-      const { id, text } = readContent(content);
+      const clipboardContent = data;
+      const { id, text } = readPlainTextClipboard(clipboardContent);
 
       log('info', 'File changed, sending new content to client.');
       res.write(`data: ${JSON.stringify({ id: id, text: text || '', timestamp: new Date().toISOString() })}\n\n`);

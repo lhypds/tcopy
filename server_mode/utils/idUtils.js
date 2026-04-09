@@ -21,9 +21,3 @@ export function readId(filePath) {
     return '';
   }
 }
-
-export function readContent(content) {
-  const id = content.match(/###ID=(.*?)###/)?.[1] || null;
-  const text = content.replace(`###ID=${id}###`, '');
-  return { id, text }
-}

@@ -1,5 +1,7 @@
 import 'dotenv/config';
-import { writeClipboard, fetchRemoteClipboard } from '../utils/clipboardUtils.js';
+import { writeClipboard, fetchRemoteClipboard, readPlainTextClipboard } from '../utils/clipboardUtils.js';
+import { resolvePath } from '../utils/pathUtils.js';
+import fs from 'fs';
 
 const baseUrl = process.env.SERVER_BASE_URL;
 if (!baseUrl) {
@@ -24,15 +26,31 @@ async function fetchFile(fromPeerId, filePath, pasteTo) {
   return true;
 }
 
+const remoteClipboardContent = await fetchRemoteClipboard(baseUrl);
+const { id, text } = readPlainTextClipboard(remoteClipboardContent);
+console.log(`Parsed clipboard content: id=\`${id}\`, text=\`${text}\``);
+
 const args = process.argv.slice(2);
+
+// e.g., `node fetch.js`
 if (args.length == 0) {
-  console.log("Failed: paste to path not provided.")
+  console.log("Pasting to clipboard...");
+
+  // Write remote clipboard content to local clipboard
+  await writeClipboard(text);
+  process.exit(0);
+}
+
+const pasteTo = resolvePath(args[0]);
+console.log("Pasting to path:", pasteTo);
+
+// Check path exist
+if (pasteTo && !fs.existsSync(pasteTo)) {
+  console.error(`Error: path \`${pasteTo}\` does not exist.`);
   process.exit(1);
 }
-const pasteTo = args[0];
-const remoteClipboardContent = await fetchRemoteClipboard(baseUrl);
-const { id, text } = readContent(remoteClipboardContent);
 
+// e.g., `node fetch.js /path/to/destination`
 let success = true;
 if (text.startsWith("+file") || text.startsWith("+image")) {
   // Fetch remote file
@@ -41,10 +59,9 @@ if (text.startsWith("+file") || text.startsWith("+image")) {
   const filePath = match ? match[1] : null;  // 1 is the first capture group
 
   // Trigger client server to fetch file.
-  success = fetchFile(id, filePath, pasteTo);
-} else {
-  // Write remote clipboard content to local clipboard
-  writeClipboard(remoteClipboardContent)
+  success = await fetchFile(id, filePath, pasteTo);
 }
 
-if (!success) process.exit(1);
+if (!success) {
+  process.exit(1);
+}

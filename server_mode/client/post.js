@@ -24,7 +24,7 @@ async function postContent(url, content) {
     .replace(/\t/g, '<TAB>')
     .replace(/ /g, '<SPACE>');
 
-  console.log(`Send content: \`${contentReplaced}\``);
+  console.log(`Posting content: \`${contentReplaced}\``);
   console.log(`Sending POST request to \`${url}\`.`);
 
   // Read client id
@@ -64,6 +64,6 @@ async function postContent(url, content) {
   }
 }
 
-const content = args.length > 0 ? args.join(' ').trim() : readClipboard();
+const content = args.length > 0 ? args.join(' ').trim() : await readClipboard();
 const success = await postContent(baseUrl, content);
 if (!success) process.exit(1);

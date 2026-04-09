@@ -1,18 +1,21 @@
 {
-  "name": "tcopy-server",
+  "name": "tcopy",
   "version": "1.0.0",
   "description": "Copy and paste from any machine to any machine.",
   "type": "module",
-  "main": "serve.js",
   "scripts": {
-    "start": "node serve.js",
+    "start:server": "node serve.js",
+    "start:client": "node client.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "gcc³",
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "peer": "^1.0.2"
+    "peer": "^1.0.2",
+    "@roamhq/wrtc": "^0.10.0",
+    "clipboardy": "^4.0.0",
+    "eventsource": "^2.0.0",
+    "peerjs": "^1.5.5"
   }
 }

@@ -7,6 +7,7 @@ export async function writeClipboard(content) {
 
 export async function readClipboard() {
   const clipboardContent = await clipboard.read();
+  console.log("Content read from clipboard.");
   return clipboardContent;
 }
 
@@ -26,4 +27,10 @@ export async function fetchRemoteClipboard(url) {
 
   console.log(`Fetched content: \`${contentReplaced}\``);
   return content;
+}
+
+export function readPlainTextClipboard(content) {
+  const id = content.match(/###ID=(.*?)###/)?.[1] || null;
+  const text = content.replace(`###ID=${id}###`, '');
+  return { id, text }
 }
