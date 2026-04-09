@@ -12,21 +12,36 @@ export async function readClipboard() {
 }
 
 export async function fetchRemoteClipboard(url) {
-  console.log(`Fetching content from \`${url}\`.`);
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} ${response.statusText}`);
+  try {
+    console.log(`Fetching content from \`${url}\`.`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `HTTP ${response.status} ${response.statusText}`,
+      };
+    }
+
+    const content = await response.text();
+
+    // Print fetched content
+    const contentReplaced = remoteClipboardResult.content
+      .replace(/\n/g, '<LF>')
+      .replace(/\r/g, '<CR>')
+      .replace(/\t/g, '<TAB>')
+      .replace(/ /g, '<SPACE>');
+    console.log(`Fetched content: \`${contentReplaced}\``);
+
+    return {
+      success: true,
+      content,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
-
-  const content = await response.text();
-  const contentReplaced = content
-    .replace(/\n/g, '<LF>')
-    .replace(/\r/g, '<CR>')
-    .replace(/\t/g, '<TAB>')
-    .replace(/ /g, '<SPACE>');
-
-  console.log(`Fetched content: \`${contentReplaced}\``);
-  return content;
 }
 
 export function readPlainTextClipboard(content) {

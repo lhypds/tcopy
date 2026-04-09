@@ -31,8 +31,14 @@ async function fetchFile(fromPeerId, filePath, pasteTo) {
   return true;
 }
 
-const remoteClipboardContent = await fetchRemoteClipboard(baseUrl);
-const { id, text } = readPlainTextClipboard(remoteClipboardContent);
+const remoteClipboardResult = await fetchRemoteClipboard(baseUrl);
+if (!remoteClipboardResult.success) {
+  console.error(`Error: ${remoteClipboardResult.error}`);
+  console.log("Abort: failed to fetch remote clipboard content.");
+  process.exit(1);
+}
+
+const { id, text } = readPlainTextClipboard(remoteClipboardResult.content);
 console.log(`Parsed clipboard content: id=\`${id}\`, text=\`${text}\``);
 
 const args = process.argv.slice(2);
