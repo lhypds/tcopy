@@ -208,8 +208,9 @@ peer.on("connection", (conn) => {
 
       // Send file
       const fileName = path.basename(filePath);
-      const fileBuffer = fs.readFileSync(filePath);
-      const fileSize = fileBuffer.length;
+      const fileSize = fs.statSync(filePath).size;
+      const chunkSize = 64 * 1024; // 64KB
+      const MAX_BUFFERED_AMOUNT = 16 * chunkSize; // 1MB
 
       // Send metadata first
       conn.send({
@@ -219,14 +220,13 @@ peer.on("connection", (conn) => {
         mime: 'application/octet-stream',
       });
 
-      // Chunk and send
-      const chunkSize = 64 * 1024; // 64KB
-      let offset = 0;
-
-      while (offset < fileSize) {
-        const chunk = fileBuffer.slice(offset, offset + chunkSize);
+      // Stream and send chunks to avoid loading the entire file into memory
+      const stream = fs.createReadStream(filePath, { highWaterMark: chunkSize });
+      for await (const chunk of stream) {
+        while (conn.dataChannel && conn.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+          await sleep(50);
+        }
         conn.send({ type: 'file-chunk', chunk });
-        offset += chunkSize;
       }
 
       conn.send({ type: 'file-end' });
