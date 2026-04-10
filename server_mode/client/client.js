@@ -15,6 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 import wrtc from "@roamhq/wrtc";
+import { resolvePath } from '../utils/pathUtils.js';
 
 // Set WebRTC globals BEFORE loading peerjs
 globalThis.window = globalThis;
@@ -196,8 +197,9 @@ peer.on("connection", (conn) => {
       log('info', `Peer connection | File request: filePath = ${data.filePath}`);
 
       // Check file exist
-      if (!fs.existsSync(data.filePath)) {
-        log('warn', `Peer connection | File not found: filePath = ${data.filePath}`);
+      const filePath = resolvePath(data.filePath);
+      if (!fs.existsSync(filePath)) {
+        log('warn', `Peer connection | File not found: filePath = ${filePath}`);
 
         // Close connection
         conn.close();
@@ -205,8 +207,8 @@ peer.on("connection", (conn) => {
       }
 
       // Send file
-      const fileName = path.basename(data.filePath);
-      const fileBuffer = fs.readFileSync(data.filePath);
+      const fileName = path.basename(filePath);
+      const fileBuffer = fs.readFileSync(filePath);
       const fileSize = fileBuffer.length;
 
       // Send metadata first
@@ -228,7 +230,7 @@ peer.on("connection", (conn) => {
       }
 
       conn.send({ type: 'file-end' });
-      log('info', `Peer connection | File sent: filePath = ${data.filePath}, size = ${fileSize} bytes`);
+      log('info', `Peer connection | File sent: filePath = ${filePath}, size = ${fileSize} bytes`);
     }
   });
 });
