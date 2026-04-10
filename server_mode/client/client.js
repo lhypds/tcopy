@@ -215,12 +215,12 @@ app.get('/filepaste', async (req, res) => {
     // Keep connection alive with heartbeats
     const heartbeatInterval = startSseHeartbeat(res);
 
+    // TODO: trigger file transfer
+    // await connectToPeer(peer, fromPeerId);
+
     // Send success event
     res.write(`data: Connected to peer (id: ${fromPeerId})\n\n`);
     log('info', `Connected to peer (id: ${fromPeerId})`);
-
-    // TODO: trigger file transfer
-    // await connectToPeer(peer, fromPeerId);
 
     // Clean up on client disconnect
     req.on('close', () => {
