@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 import { readId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
-import { setupConnection, connectToPeer } from '../utils/peerUtils.js';
 import { startSseHeartbeat, resetSseTimeout } from '../utils/sseUtils.js';
 import { RECONNECT_DELAY } from '../constants.js';
 import express from 'express';
@@ -168,12 +167,28 @@ const peer = new Peer(id, {
 
 peer.on("open", (id) => {
   globalThis.peerStatus = 'connected';
-  log('info', `Ready for incoming connections. (ID: ${id})`);
+  log('info', `Peer open: peer (id: ${id})`);
 });
 
 peer.on("connection", (conn) => {
-  log('info', `Incoming connection from ${conn.peer}.`);
-  setupConnection(conn);
+  globalThis.peerStatus = 'connection';
+  log('info', `Peer connection: incoming connection from peer (id: ${conn.peer}).`);
+
+  conn.on("open", async () => {
+    log('info', `Peer connection | connection open: connection peer (id: ${conn.peer})`);
+  });
+
+  conn.on("close", () => {
+    log('info', `Peer connection | connection closed: connection peer (id: ${conn.peer})`);
+  });
+
+  conn.on("error", (err) => {
+    log('error', `Peer connection | connection error: connection peer (id: ${conn.peer}), ${err.message || err}`);
+  });
+
+  conn.on("data", async (data) => {
+    log('info', `Peer connection | connection data received: connection peer (id: ${conn.peer})`);
+  });
 });
 
 peer.on("error", (err) => {
@@ -214,13 +229,22 @@ app.get('/filepaste', async (req, res) => {
   try {
     // Keep connection alive with heartbeats
     const heartbeatInterval = startSseHeartbeat(res);
+    const conn = peer.connect(fromPeerId);
 
-    // TODO: trigger file transfer
-    // await connectToPeer(peer, fromPeerId);
+    conn.on('open', () => {
+      console.log('Connected to peer');
 
-    // Send success event
-    res.write(`data: Connected to peer (id: ${fromPeerId})\n\n`);
-    log('info', `Connected to peer (id: ${fromPeerId})`);
+      // Send success event
+      res.write(`data: Connected to peer\n\n`);
+      log('info', `Connected to peer (id: ${conn.peer})`);
+    });
+
+    conn.on('error', (error) => {
+      log('error', `Failed to connect peer (id: ${fromPeerId}): ${error.message || error}`);
+      res.write(`data: Failed to paste.\n\n`);
+      clearInterval(heartbeatInterval);
+      res.end();
+    });
 
     // Clean up on client disconnect
     req.on('close', () => {

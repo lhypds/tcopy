@@ -1,6 +1,6 @@
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
-import { readClipboard, writeClipboard } from '../utils/clipboardUtils.js'
+import { writeClipboard } from '../utils/clipboardUtils.js'
 
 // Logger
 const log = createLogger('peer.log');
@@ -27,71 +27,6 @@ function getOrCreateTransfer(peerId) {
   }
 
   return transfer;
-}
-
-// Source peer
-export function setupConnection(conn) {
-  if (connections.has(conn.peer)) {
-    const oldConn = connections.get(conn.peer);
-    if (oldConn && oldConn.open) {
-      log('info', `Already connected to ${conn.peer}`);
-      return oldConn;
-    }
-  }
-
-  connections.set(conn.peer, conn);
-  conn.on("open", async () => {
-    log('info', `Connection open with ${conn.peer}`);
-
-    // Send anything in clipboard buffer (file or content)
-    const clipboard = await readClipboard();
-    conn.send(clipboard);
-  });
-
-  conn.on("close", () => {
-    log('info', `Connection closed with ${conn.peer}`);
-    connections.delete(conn.peer);
-    incomingTransfers.delete(conn.peer);
-  });
-
-  conn.on("error", (err) => {
-    log('error', `Connection error with ${conn.peer}: ${err.message || err}`);
-  });
-
-  conn.on("data", async (data) => {
-    await handleIncomingData(conn, data);
-  });
-
-  return conn;
-}
-
-// Destination peer
-export function connectToPeer(peer, fromPeerId) {
-  return new Promise((resolve, reject) => {
-    const conn = peer.connect(fromPeerId);
-    if (!conn) {
-      reject(new Error('peer.connect returned no connection'));
-      return;
-    }
-
-    conn.on("open", () => {
-      log('info', `Connection open with ${conn.peer}`);
-    });
-
-    conn.on("close", () => {
-      log('info', `Connection closed with ${conn.peer}`);
-      connections.delete(conn.peer);
-      incomingTransfers.delete(conn.peer);
-    });
-
-    conn.on("error", (err) => {
-      log('error', `Connection error with ${conn.peer}: ${err.message || err}`);
-    });
-
-    conn.on("data", async (data) => {
-      await handleIncomingData(conn, data);
-    });
-  });
 }
 
 export async function handleIncomingData(conn, data) {
