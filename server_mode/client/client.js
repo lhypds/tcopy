@@ -167,43 +167,43 @@ const peer = new Peer(id, {
 
 peer.on("open", (id) => {
   globalThis.peerStatus = 'connected';
-  log('info', `Peer open: server: ${baseUrl}/signal`);
+  log('info', `Peer open: server = ${baseUrl}/signal`);
 });
 
 peer.on("connection", (conn) => {
   globalThis.peerStatus = 'connection';
-  log('info', `Peer connection: incoming connection peer (id: ${conn.peer}).`);
+  log('info', `Peer connection: incoming connection peer = ${conn.peer}.`);
 
   conn.on("open", async () => {
-    log('info', `Peer connection | connection open: connection peer (id: ${conn.peer})`);
+    log('info', `Peer connection | Connection open: connection peer = ${conn.peer}`);
   });
 
   conn.on("close", () => {
-    log('info', `Peer connection | connection closed: connection peer (id: ${conn.peer})`);
+    log('info', `Peer connection | Connection closed: connection peer = ${conn.peer}`);
   });
 
   conn.on("error", (err) => {
-    log('error', `Peer connection | connection error: connection peer (id: ${conn.peer}), ${err.message || err}`);
+    log('error', `Peer connection | Connection error: connection peer = ${conn.peer}, error = ${err.message || err}`);
   });
 
   conn.on("data", async (data) => {
-    log('info', `Peer connection | connection data received: connection peer (id: ${conn.peer})`);
+    log('info', `Peer connection | Connection data: received, connection peer = ${conn.peer}`);
   });
 });
 
 peer.on("error", (err) => {
   globalThis.peerStatus = 'error';
-  log('error', `Peer error. ${err.message || err}`);
+  log('error', `Peer error: server = ${baseUrl}/signal, error = ${err.message || err}`);
 });
 
 peer.on("disconnected", () => {
   globalThis.peerStatus = 'disconnected';
-  log('warn', "Disconnected from peer server.");
+  log('info', `Peer disconnected: server = ${baseUrl}/signal`);
 });
 
 peer.on("close", () => {
   globalThis.peerStatus = 'closed';
-  log('warn', "Peer closed.");
+  log('warn', `Peer close: server = ${baseUrl}/signal`);
 });
 
 // Local SSE route for accepting paste events and triggering PeerJS file transfer
@@ -232,29 +232,31 @@ app.get('/filepaste', async (req, res) => {
     const conn = peer.connect(fromPeerId);
 
     conn.on('open', () => {
-      console.log('Connected to peer');
+      log('info', `Paste SSE | Connection open: peer = ${conn.peer}`);
 
       // Send success event
-      res.write(`data: Connected to peer\n\n`);
-      log('info', `Connected to peer (id: ${conn.peer})`);
+      res.write(`data: Connected to peer (id: ${conn.peer})\n\n`);
     });
 
     conn.on('error', (error) => {
-      log('error', `Failed to connect peer (id: ${fromPeerId}): ${error.message || error}`);
-      res.write(`data: Failed to paste.\n\n`);
+      log('error', `Paste SSE | Connection error: peer = ${conn.peer}, error = ${error.message || error}`);
+
+      res.write(`data: Connection error (id: ${fromPeerId}).\n\n`);
       clearInterval(heartbeatInterval);
       res.end();
     });
 
     // Clean up on client disconnect
     req.on('close', () => {
+      log('info', `Paste SSE | Connection close: peer = ${fromPeerId}`);
+
       clearInterval(heartbeatInterval);
       res.end();
-      log('info', `Paste SSE connection closed for peer (id: ${fromPeerId})`);
     });
   } catch (error) {
-    log('error', `Failed to paste: ${error.message || error}`);
-    res.write(`data: Failed to paste.\n\n`);
+    log('error', `Paste SSE failed with error: ${error.message || error}`);
+
+    res.write(`data: Error (id: ${fromPeerId}).\n\n`);
     res.end();
   }
 });
