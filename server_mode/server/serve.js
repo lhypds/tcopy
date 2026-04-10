@@ -35,6 +35,45 @@ app.use((req, res, next) => {
   next();
 });
 
+// ---- I. Basic clipboard update route ------------------------------
+// Update
+// Input is JSON, for example: { "text": "Hello, World!" }
+app.post('/', (req, res) => {
+  const { id, text, timestamp } = req.body || {};
+
+  if (text) {
+    // Log the received text input to the console
+    log('info', `Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
+
+    fs.writeFile(clipboardFile, `###ID=${id}###` + text, (err) => {
+      if (err) {
+        res.status(500).send('Error saving the text');
+      } else {
+        res.send('Text saved: `' + text + '`');
+      }
+    });
+  } else {
+    res.status(400).send('No text input provided.');
+  }
+});
+
+// Get clipboard
+// Route to get the content of the file
+app.get('/', (req, res) => {
+  if (!fs.existsSync(clipboardFile)) {
+    return res.send('');
+  }
+
+  fs.readFile(clipboardFile, 'utf8', (err, data) => {
+    if (err) {
+      res.status(500).send('Error reading the file');
+    } else {
+      res.send(data || '');
+    }
+  });
+});
+
+// ---- II. SSE for watching clipboard and updates to clients --------
 const fileWatcher = (filePath, interval = 300) => (req, res) => {
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '', 'utf8');
@@ -67,43 +106,8 @@ const fileWatcher = (filePath, interval = 300) => (req, res) => {
     res.end();
   });
 };
+
 const watchFileEvents = fileWatcher(clipboardFile, watchInterval);
-
-// Route to replace text input in a file
-// Input is JSON, for example: { "text": "Hello, World!" }
-app.post('/', (req, res) => {
-  const { id, text, timestamp } = req.body || {};
-
-  if (text) {
-    // Log the received text input to the console
-    log('info', `Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
-
-    fs.writeFile(clipboardFile, `###ID=${id}###` + text, (err) => {
-      if (err) {
-        res.status(500).send('Error saving the text');
-      } else {
-        res.send('Text saved: `' + text + '`');
-      }
-    });
-  } else {
-    res.status(400).send('No text input provided.');
-  }
-});
-
-// Route to get the content of the file
-app.get('/', (req, res) => {
-  if (!fs.existsSync(clipboardFile)) {
-    return res.send('');
-  }
-
-  fs.readFile(clipboardFile, 'utf8', (err, data) => {
-    if (err) {
-      res.status(500).send('Error reading the file');
-    } else {
-      res.send(data || '');
-    }
-  });
-});
 
 // Route for Server-Sent Events to watch file changes
 app.get('/sse', (req, res) => {
@@ -127,6 +131,7 @@ app.get('/sse', (req, res) => {
   watchFileEvents(req, res);
 });
 
+// Server start
 const server = app.listen(port, () => {
   // Ensure the clipboard file exists
   if (!fs.existsSync(clipboardFile)) {
@@ -154,6 +159,7 @@ const server = app.listen(port, () => {
   console.log('');
 });
 
+// ---- III. PeerJS signaling server for WebRTC connections ----------
 // PeerJS signaling server for WebRTC
 // ExpressPeerServer needs the http.Server instance returned by app.listen()
 // so it must come after. That's the standard PeerJS pattern.

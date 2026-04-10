@@ -67,46 +67,6 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// PeerJS client for WebRTC
-const url = new URL(baseUrl);
-const peer = new Peer(id, {
-  host: url.hostname,
-  port: url.port ? Number(url.port) : (url.protocol === "https:" ? 443 : 80),
-  path: "/signal",
-  secure: url.protocol === "https:",
-  wrtc,
-  config: {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-    ],
-  },
-});
-
-peer.on("open", (id) => {
-  globalThis.peerStatus = 'connected';
-  log('info', `Ready for incoming connections. (ID: ${id})`);
-});
-
-peer.on("connection", (conn) => {
-  log('info', `Incoming connection from ${conn.peer}.`);
-  setupConnection(conn);
-});
-
-peer.on("error", (err) => {
-  globalThis.peerStatus = 'error';
-  log('error', `Peer error. ${err.message || err}`);
-});
-
-peer.on("disconnected", () => {
-  globalThis.peerStatus = 'disconnected';
-  log('warn', "Disconnected from peer server.");
-});
-
-peer.on("close", () => {
-  globalThis.peerStatus = 'closed';
-  log('warn', "Peer closed.");
-});
-
 // Express server (client local server)
 const app = express();
 app.use(express.json());
@@ -123,83 +83,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Get client info
-app.get('/', (req, res) => {
-  return res.json({
-    id,
-    serverBaseUrl: baseUrl,
-    sse: {
-      url: sseUrl,
-      status: globalThis.sseStatus,
-    },
-    peer: {
-      url: peerSignalUrl,
-      status: globalThis.peerStatus,
-    }
-  });
-});
-
-// SSE endpoint for paste events
-app.get('/paste', async (req, res) => {
-  // Get paste parameters from query string
-  const { fromPeerId, filePath, pasteTo } = req.query || {};
-
-  // Log the paste request
-  log('info', `Received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
-
-  if (!fromPeerId) {
-    log('warn', 'Paste SSE request missing fromPeerId.');
-    return res.status(400).json({ success: false, error: 'fromPeerId is required' });
-  }
-
-  // Set SSE headers
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
-  // Connect to the peer to trigger file transfer
-  try {
-    // Send success event
-    res.write(`data: Connected to peer (id: ${fromPeerId})\n\n`);
-    log('info', `Successfully connected to peer ${fromPeerId}`);
-
-    // TODO: trigger file transfer
-    // await connectToPeer(peer, fromPeerId);
-
-    // Keep connection alive with heartbeats
-    const heartbeatInterval = startSseHeartbeat(res);
-
-    // Clean up on client disconnect
-    req.on('close', () => {
-      clearInterval(heartbeatInterval);
-      res.end();
-      log('info', `Paste SSE connection closed for peer ${fromPeerId}`);
-    });
-  } catch (error) {
-    log('error', `Failed to connect to peer ${fromPeerId}: ${error.message || error}`);
-    res.write(`data: Failed to connect to peer (id: ${fromPeerId})\n\n`);
-    res.end();
-  }
-});
-
-app.listen(port, () => {
-  // Log server start message
-  log('info', `Server (client local server) is running at \`http://localhost:${port}\`.`);
-
-  // Print available endpoints
-  const endpoints = [
-    { method: 'GET', path: '/' },
-    { method: 'GET', path: '/paste' },
-  ]
-  console.log('\nAvailable endpoints:');
-  endpoints.forEach(endpoint => {
-    console.log(`- ${endpoint.method} ${endpoint.path}`);
-  });
-  console.log('');
-});
-
-// Connect SSE
+// ---- I. Connect SSE for clipboard updates from server -------------
 async function connectAndWatchEvents() {
   while (true) {
     await new Promise(resolve => {
@@ -264,5 +148,122 @@ async function connectAndWatchEvents() {
     await sleep(RECONNECT_DELAY);
   }
 }
-
 connectAndWatchEvents();
+
+// ---- II. PeerJS client for WebRTC connections ---------------------
+// PeerJS client for WebRTC
+const url = new URL(baseUrl);
+const peer = new Peer(id, {
+  host: url.hostname,
+  port: url.port ? Number(url.port) : (url.protocol === "https:" ? 443 : 80),
+  path: "/signal",
+  secure: url.protocol === "https:",
+  wrtc,
+  config: {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+    ],
+  },
+});
+
+peer.on("open", (id) => {
+  globalThis.peerStatus = 'connected';
+  log('info', `Ready for incoming connections. (ID: ${id})`);
+});
+
+peer.on("connection", (conn) => {
+  log('info', `Incoming connection from ${conn.peer}.`);
+  setupConnection(conn);
+});
+
+peer.on("error", (err) => {
+  globalThis.peerStatus = 'error';
+  log('error', `Peer error. ${err.message || err}`);
+});
+
+peer.on("disconnected", () => {
+  globalThis.peerStatus = 'disconnected';
+  log('warn', "Disconnected from peer server.");
+});
+
+peer.on("close", () => {
+  globalThis.peerStatus = 'closed';
+  log('warn', "Peer closed.");
+});
+
+// Local SSE route for accepting paste events and triggering PeerJS file transfer
+app.get('/filepaste', async (req, res) => {
+  // Get paste parameters from query string
+  const { fromPeerId, filePath, pasteTo } = req.query || {};
+
+  // Log the paste request
+  log('info', `Received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
+
+  if (!fromPeerId) {
+    log('warn', 'Paste SSE request missing fromPeerId.');
+    return res.status(400).json({ success: false, error: 'fromPeerId is required' });
+  }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  // Connect to the peer to trigger file transfer
+  try {
+    // Send success event
+    res.write(`data: Connected to peer (id: ${fromPeerId})\n\n`);
+    log('info', `Successfully connected to peer ${fromPeerId}`);
+
+    // TODO: trigger file transfer
+    // await connectToPeer(peer, fromPeerId);
+
+    // Keep connection alive with heartbeats
+    const heartbeatInterval = startSseHeartbeat(res);
+
+    // Clean up on client disconnect
+    req.on('close', () => {
+      clearInterval(heartbeatInterval);
+      res.end();
+      log('info', `Paste SSE connection closed for peer ${fromPeerId}`);
+    });
+  } catch (error) {
+    log('error', `Failed to connect to peer ${fromPeerId}: ${error.message || error}`);
+    res.write(`data: Failed to connect to peer (id: ${fromPeerId})\n\n`);
+    res.end();
+  }
+});
+
+// Server start
+// Get client info and status
+app.get('/', (req, res) => {
+  return res.json({
+    id,
+    serverBaseUrl: baseUrl,
+    sse: {
+      url: sseUrl,
+      status: globalThis.sseStatus,
+    },
+    peer: {
+      url: peerSignalUrl,
+      status: globalThis.peerStatus,
+    }
+  });
+});
+
+app.listen(port, () => {
+  // Log server start message
+  log('info', `Server (client local server) is running at \`http://localhost:${port}\`.`);
+
+  // Print available endpoints
+  const endpoints = [
+    { method: 'GET', path: '/' },
+    { method: 'GET', path: '/filepaste' },
+  ]
+  console.log('\nAvailable endpoints:');
+  endpoints.forEach(endpoint => {
+    console.log(`- ${endpoint.method} ${endpoint.path}`);
+  });
+  console.log('');
+});

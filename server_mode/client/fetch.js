@@ -19,7 +19,8 @@ if (!baseUrl) {
 // Client server port
 const port = process.env.PORT || 5460;
 
-const sseUrl = `http://localhost:${port}/paste`;
+// Local SSE endpoint for file paste events
+const sseFilePasteUrl = `http://localhost:${port}/filepaste`;
 
 async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
   const params = new URLSearchParams({
@@ -29,7 +30,7 @@ async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
   });
 
   return await new Promise((resolve) => {
-    const es = new EventSource(`${sseUrl}?${params.toString()}`);
+    const es = new EventSource(`${sseFilePasteUrl}?${params.toString()}`);
     const timeout = setTimeout(() => {
       es.close();
       resolve(false);
@@ -70,7 +71,6 @@ console.log(`Parsed clipboard content: id=\`${id}\`, text=\`${text}\``);
 const args = process.argv.slice(2);
 
 // ---- pasting remote clipboard text to local clipboard -------------
-
 // Has no argument.
 // e.g., `node fetch.js`
 if (args.length == 0) {
@@ -82,7 +82,6 @@ if (args.length == 0) {
 }
 
 // ---- pasting a file to local path ---------------------------------
-
 // Has a argument.
 // e.g., `node fetch.js /path/to/destination`
 const pasteTo = resolvePath(args[0]);

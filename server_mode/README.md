@@ -61,7 +61,7 @@ or
 
 * Endpoints  
 
-POST /paste  
+POST /filepaste  
 Trigger paste operation.  
 
 
@@ -102,7 +102,7 @@ If the clipboard content is a file path.
 Example:  
 `###ID=1111111###+file[~/Desktop/a.txt]`
 It will parse the client id (peer id, `1111111`) and original file path (`~/Desktop/a.txt`).  
-It will send a POST request to local client's server (`client.js`) `/paste` with the paste path.  
+It will send a POST request to local client's server (`client.js`) `/filepaste` with the paste path.  
 
 File transfer direction:  
  Orignal file path      ->   Paste path  
@@ -110,5 +110,5 @@ File transfer direction:
  Client A (id:1111111)    Client B (id:2222222)  
     Machine A                 Machine B  
 
-7. Client B's `client.js` will receive the POST request on `/paste`.  
+7. Client B's `client.js` will receive the POST request on `/filepaste`.  
 Then use PeerJS to connect to client A (id:1111111) and request the file.  
