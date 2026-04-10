@@ -48,6 +48,7 @@ log('info', `Starting tcopy client (id: ${id})...`);
 // Client local server port
 const port = process.env.PORT || 5461;
 
+// Server base URL
 const baseUrl = process.env.SERVER_BASE_URL;
 
 if (!baseUrl) {
@@ -55,7 +56,14 @@ if (!baseUrl) {
   process.exit(1);
 }
 
+const sseUrl = `${baseUrl}/sse?id=${id}`;
+const peerSignalUrl = `${baseUrl}/signal`;
+
+globalThis.sseStatus = 'starting';
+globalThis.peerStatus = 'starting';
+
 process.on('SIGINT', () => {
+  globalThis.sseStatus = 'disconnected';
   log('info', 'Stopped by user.');
   process.exit(0);
 });
@@ -76,6 +84,7 @@ const peer = new Peer(id, {
 });
 
 peer.on("open", (id) => {
+  globalThis.peerStatus = 'connected';
   log('info', `Ready for incoming connections. (ID: ${id})`);
 });
 
@@ -85,14 +94,17 @@ peer.on("connection", (conn) => {
 });
 
 peer.on("error", (err) => {
+  globalThis.peerStatus = 'error';
   log('error', `Peer error. ${err.message || err}`);
 });
 
 peer.on("disconnected", () => {
+  globalThis.peerStatus = 'disconnected';
   log('warn', "Disconnected from peer server.");
 });
 
 peer.on("close", () => {
+  globalThis.peerStatus = 'closed';
   log('warn', "Peer closed.");
 });
 
@@ -112,22 +124,21 @@ app.use((req, res, next) => {
   next();
 });
 
-app.listen(port, () => {
-  // Log server start message
-  log('info', `Server (client local server) is running at \`http://localhost:${port}\`.`);
-
-  // Print available endpoints
-  const endpoints = [
-    { method: 'POST', path: '/paste' },
-  ]
-  console.log('\nAvailable endpoints:');
-  endpoints.forEach(endpoint => {
-    console.log(`- ${endpoint.method} ${endpoint.path}`);
+// Get client info
+app.get('/', (req, res) => {
+  return res.json({
+    id,
+    serverBaseUrl: baseUrl,
+    sse: {
+      url: sseUrl,
+      status: globalThis.sseStatus,
+    },
+    peer: {
+      url: peerSignalUrl,
+      status: globalThis.peerStatus,
+    }
   });
-  console.log('');
 });
-
-
 
 // Route to get the content of the file
 app.post('/paste', async (req, res) => {
@@ -152,24 +163,43 @@ app.post('/paste', async (req, res) => {
   }
 });
 
+app.listen(port, () => {
+  // Log server start message
+  log('info', `Server (client local server) is running at \`http://localhost:${port}\`.`);
+
+  // Print available endpoints
+  const endpoints = [
+    { method: 'GET', path: '/' },
+    { method: 'POST', path: '/paste' },
+  ]
+  console.log('\nAvailable endpoints:');
+  endpoints.forEach(endpoint => {
+    console.log(`- ${endpoint.method} ${endpoint.path}`);
+  });
+  console.log('');
+});
+
 // Connect SSE
 async function connectAndWatchEvents(baseUrl, id) {
   while (true) {
     await new Promise(resolve => {
       let heartbeatTimer;
+      globalThis.sseStatus = 'connecting';
 
       function resetHeartbeat() {
         clearTimeout(heartbeatTimer);
         heartbeatTimer = setTimeout(() => {
+          globalThis.sseStatus = 'reconnecting';
           log('warning', `No heartbeat received for ${HEARTBEAT_TIMEOUT / 1000}s. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
           es.close();
           resolve();
         }, HEARTBEAT_TIMEOUT);
       }
 
-      const es = new EventSource(`${baseUrl}/sse?id=${encodeURIComponent(id)}`);
+      const es = new EventSource(sseUrl);
       es.onopen = () => {
-        log('info', `Connected to SSE endpoint: ${baseUrl}/sse?id=${id}`);
+        globalThis.sseStatus = 'connected';
+        log('info', `Connected to SSE endpoint: ${sseUrl}`);
         resetHeartbeat();
       };
 
@@ -204,6 +234,7 @@ async function connectAndWatchEvents(baseUrl, id) {
 
       es.onerror = () => {
         clearTimeout(heartbeatTimer);
+        globalThis.sseStatus = 'reconnecting';
         log('warning', `Connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
         es.close();
         resolve();
