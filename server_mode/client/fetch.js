@@ -18,22 +18,31 @@ if (!baseUrl) {
 // Client server port
 const port = process.env.PORT || 5460;
 
-async function fetchFile(fromPeerId, filePath, pasteTo) {
+async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
   // Trigger paste
-  const response = await fetch(`http://localhost:${port}/paste`, {
-    method: "POST",
+  const response = await fetch(`http://localhost:${port}/paste?fromPeerId=${fromPeerId}&filePath=${encodeURIComponent(filePath)}&pasteTo=${encodeURIComponent(pasteTo)}`, {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      fromPeerId: fromPeerId,
-      filePath: filePath,
-      pasteTo: pasteTo,
-    })
   });
 
   if (!response.ok) {
     return false;
+  }
+
+  // Read and print SSE response
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value);
+    if (chunk.trim()) {
+      console.log("SSE:", chunk.trim());
+    }
   }
   return true;
 }
@@ -83,7 +92,7 @@ if (text.startsWith("+file") || text.startsWith("+image")) {
   const filePath = match ? match[1] : null;  // 1 is the first capture group
 
   // Trigger client server to fetch file.
-  success = await fetchFile(id, filePath, pasteTo);
+  success = await triggerPeerTransfer(id, filePath, pasteTo);
 }
 
 if (!success) {

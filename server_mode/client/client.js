@@ -140,26 +140,48 @@ app.get('/', (req, res) => {
   });
 });
 
-// Route to get the content of the file
-app.post('/paste', async (req, res) => {
-  // Trigger paste
-  const { fromPeerId, filePath, pasteTo } = req.body || {};
+// SSE endpoint for paste events
+app.get('/paste', async (req, res) => {
+  // Get paste parameters from query string
+  const { fromPeerId, filePath, pasteTo } = req.query || {};
 
   // Log the paste request
-  log('info', `Received paste request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
+  log('info', `Received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
 
   if (!fromPeerId) {
-    log('warn', 'Paste request missing fromPeerId.');
+    log('warn', 'Paste SSE request missing fromPeerId.');
     return res.status(400).json({ success: false, error: 'fromPeerId is required' });
   }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
   // Connect to the peer to trigger file transfer
   try {
     await connectToPeer(peer, fromPeerId);
-    return res.json({ success: true });
+
+    // Send success event
+    res.write(`data: ${JSON.stringify({ success: true, message: 'Connected to peer' })}\n\n`);
+    log('info', `Successfully connected to peer ${fromPeerId}`);
+
+    // Keep connection alive with heartbeats
+    const heartbeatInterval = setInterval(() => {
+      res.write(`: heartbeat\n\n`);
+    }, 30000);
+
+    // Clean up on client disconnect
+    req.on('close', () => {
+      clearInterval(heartbeatInterval);
+      res.end();
+      log('info', `Paste SSE connection closed for peer ${fromPeerId}`);
+    });
   } catch (error) {
     log('error', `Failed to connect to peer ${fromPeerId}: ${error.message || error}`);
-    return res.status(500).json({ success: false, error: 'Failed to connect to peer' });
+    res.write(`data: ${JSON.stringify({ success: false, error: 'Failed to connect to peer' })}\n\n`);
+    res.end();
   }
 });
 
@@ -170,7 +192,7 @@ app.listen(port, () => {
   // Print available endpoints
   const endpoints = [
     { method: 'GET', path: '/' },
-    { method: 'POST', path: '/paste' },
+    { method: 'GET', path: '/paste' },
   ]
   console.log('\nAvailable endpoints:');
   endpoints.forEach(endpoint => {
