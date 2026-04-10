@@ -7,6 +7,7 @@ import { readId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
 import { setupConnection, connectToPeer } from '../utils/peerUtils.js';
+import { startSseHeartbeat, resetSseTimeout } from '../utils/sseUtils.js';
 import { RECONNECT_DELAY, SSE_HEARTBEAT_INTERVAL } from '../constants.js';
 import express from 'express';
 
@@ -167,9 +168,7 @@ app.get('/paste', async (req, res) => {
     // await connectToPeer(peer, fromPeerId);
 
     // Keep connection alive with heartbeats
-    const heartbeatInterval = setInterval(() => {
-      res.write(`: heartbeat\n\n`);
-    }, SSE_HEARTBEAT_INTERVAL);
+    const heartbeatInterval = startSseHeartbeat(res);
 
     // Clean up on client disconnect
     req.on('close', () => {
@@ -201,20 +200,19 @@ app.listen(port, () => {
 });
 
 // Connect SSE
-async function connectAndWatchEvents(baseUrl, id) {
+async function connectAndWatchEvents() {
   while (true) {
     await new Promise(resolve => {
       let heartbeatTimer;
       globalThis.sseStatus = 'connecting';
 
       function resetHeartbeat() {
-        clearTimeout(heartbeatTimer);
-        heartbeatTimer = setTimeout(() => {
+        heartbeatTimer = resetSseTimeout(heartbeatTimer, () => {
           globalThis.sseStatus = 'reconnecting';
           log('warning', `No heartbeat received. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
           es.close();
           resolve();
-        }, SSE_HEARTBEAT_INTERVAL * 1.5);
+        });
       }
 
       const es = new EventSource(sseUrl);
@@ -226,31 +224,32 @@ async function connectAndWatchEvents(baseUrl, id) {
 
       es.onmessage = async event => {
         resetHeartbeat();
-        try {
-          const data = JSON.parse(event.data);
-          const { id: id_, text = '', timestamp = '' } = data;
 
-          if (text === '###ALIVE###') {
-            log('debug', 'Heartbeat.');
-            return;
-          }
-
-          if (id === id_) {
-            log('debug', 'Ignored as sent by self.');
-            return;
-          }
-
-          const contentReplaced = text
-            .replace(/\n/g, '<LF>')
-            .replace(/\r/g, '<CR>')
-            .replace(/\t/g, '<TAB>')
-            .replace(/ /g, '<SPACE>');
-
-          await clipboard.write(text);
-          log('info', `Content received (id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
-        } catch (e) {
-          log('error', `Error parsing data: ${e.message}`);
+        // Print raw event data for debugging
+        if (event.data.trim()) {
+          log('debug', `Received SSE data: ${event.data}`);
         }
+
+        // try {
+        //   const data = JSON.parse(event.data);
+        //   const { id: id_, text = '', timestamp = '' } = data;
+
+        //   if (id === id_) {
+        //     log('debug', 'Ignored as sent by self.');
+        //     return;
+        //   }
+
+        //   const contentReplaced = text
+        //     .replace(/\n/g, '<LF>')
+        //     .replace(/\r/g, '<CR>')
+        //     .replace(/\t/g, '<TAB>')
+        //     .replace(/ /g, '<SPACE>');
+
+        //   await clipboard.write(text);
+        //   log('info', `Content received (id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
+        // } catch (e) {
+        //   log('error', `Error parsing data: ${e.message}`);
+        // }
       };
 
       es.onerror = () => {
@@ -266,4 +265,4 @@ async function connectAndWatchEvents(baseUrl, id) {
   }
 }
 
-connectAndWatchEvents(baseUrl, id);
+connectAndWatchEvents();

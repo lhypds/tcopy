@@ -7,7 +7,7 @@ import { writeId } from '../utils/idUtils.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
-import { SSE_HEARTBEAT_INTERVAL } from '../constants.js';
+import { startSseHeartbeat } from '../utils/sseUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -115,14 +115,11 @@ app.get('/sse', (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  const heartbeatTimer = setInterval(() => {
-    if (!res.writableEnded) {
-      res.write(`data: ${JSON.stringify({ text: '###ALIVE###', timestamp: new Date().toISOString() })}\n\n`);
-    }
-  }, SSE_HEARTBEAT_INTERVAL);
+  // Keep connection alive with heartbeats
+  const heartbeatInterval = startSseHeartbeat(res);
 
   req.on('close', () => {
-    clearInterval(heartbeatTimer);
+    clearInterval(heartbeatInterval);
     log('info', 'Client disconnected from /sse endpoint.');
   });
 
