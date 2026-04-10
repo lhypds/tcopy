@@ -108,7 +108,7 @@ app.get('/', (req, res) => {
 // Route for Server-Sent Events to watch file changes
 app.get('/sse', (req, res) => {
   const clientId = req.query.id || 'unknown';
-  log('info', `Client connected to /sse endpoint (id: ${clientId}).`);
+  log('info', `Client (id: ${clientId}) connected to /sse endpoint.`);
 
   // Send an initial heartbeat to establish the connection
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -121,7 +121,7 @@ app.get('/sse', (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeatInterval);
-    log('info', `Client disconnected from /sse endpoint (id: ${clientId}).`);
+    log('info', `Client (id: ${clientId}) disconnected from /sse endpoint.`);
   });
 
   watchFileEvents(req, res);
