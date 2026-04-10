@@ -212,25 +212,25 @@ app.get('/filepaste', async (req, res) => {
 
   // Connect to the peer to trigger file transfer
   try {
+    // Keep connection alive with heartbeats
+    const heartbeatInterval = startSseHeartbeat(res);
+
     // Send success event
     res.write(`data: Connected to peer (id: ${fromPeerId})\n\n`);
-    log('info', `Successfully connected to peer ${fromPeerId}`);
+    log('info', `Connected to peer (id: ${fromPeerId})`);
 
     // TODO: trigger file transfer
     // await connectToPeer(peer, fromPeerId);
-
-    // Keep connection alive with heartbeats
-    const heartbeatInterval = startSseHeartbeat(res);
 
     // Clean up on client disconnect
     req.on('close', () => {
       clearInterval(heartbeatInterval);
       res.end();
-      log('info', `Paste SSE connection closed for peer ${fromPeerId}`);
+      log('info', `Paste SSE connection closed for peer (id: ${fromPeerId})`);
     });
   } catch (error) {
-    log('error', `Failed to connect to peer ${fromPeerId}: ${error.message || error}`);
-    res.write(`data: Failed to connect to peer (id: ${fromPeerId})\n\n`);
+    log('error', `Failed to paste: ${error.message || error}`);
+    res.write(`data: Failed to paste.\n\n`);
     res.end();
   }
 });
