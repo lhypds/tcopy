@@ -138,7 +138,7 @@ async function connectAndWatchEvents() {
       es.onerror = () => {
         clearTimeout(heartbeatTimer);
         globalThis.sseStatus = 'reconnecting';
-        log('warning', `Connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+        log('warning', `Server connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
         es.close();
         resolve();
       };
