@@ -1,6 +1,6 @@
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
-import { readClipboard } from '../utils/clipboardUtils.js'
+import { readClipboard, writeClipboard } from '../utils/clipboardUtils.js'
 
 // Logger
 const log = createLogger('peer.log');
@@ -10,6 +10,24 @@ const incomingTransfers = new Map();
 
 const CHUNK_SIZE = 64 * 1024; // 64KB
 const MAX_BUFFERED_AMOUNT = 16 * CHUNK_SIZE; // 1MB
+
+function getOrCreateTransfer(peerId) {
+  let transfer = incomingTransfers.get(peerId);
+
+  if (!transfer) {
+    transfer = {
+      name: null,
+      size: 0,
+      mime: 'application/octet-stream',
+      received: 0,
+      chunks: [],
+      hasInfo: false,
+    };
+    incomingTransfers.set(peerId, transfer);
+  }
+
+  return transfer;
+}
 
 // Source peer
 export function setupConnection(conn) {
@@ -80,22 +98,32 @@ export async function handleIncomingData(conn, data) {
   const peerId = conn.peer;
   let transfer = incomingTransfers.get(peerId);
 
-  if (data && typeof data === "object" && data.type === "file-info") {
-    transfer = {
-      name: data.name,
-      size: data.size,
-      mime: data.mime || "application/octet-stream",
-      received: 0,
-      chunks: [],
-    };
+  if (typeof data === 'string') {
+    await writeClipboard(data);
 
-    incomingTransfers.set(peerId, transfer);
+    const contentReplaced = data
+      .replace(/\n/g, '<LF>')
+      .replace(/\r/g, '<CR>')
+      .replace(/\t/g, '<TAB>')
+      .replace(/ /g, '<SPACE>');
+
+    log('info', `Content received from ${peerId}: \`${contentReplaced}\``);
+    return;
+  }
+
+  if (data && typeof data === "object" && data.type === "file-info") {
+    transfer = getOrCreateTransfer(peerId);
+    transfer.name = data.name;
+    transfer.size = data.size;
+    transfer.mime = data.mime || "application/octet-stream";
+    transfer.hasInfo = true;
+
     log('info', `Receiving "${transfer.name}" from ${peerId} (${transfer.size} bytes)`);
     return;
   }
 
   if (data && typeof data === "object" && data.type === "file-end") {
-    if (!transfer) {
+    if (!transfer || !transfer.hasInfo) {
       log('warn', `Received file-end from ${peerId}, but no file-info found`);
       return;
     }
@@ -116,10 +144,7 @@ export async function handleIncomingData(conn, data) {
     return;
   }
 
-  if (!transfer) {
-    log('warn', `Received binary data from ${peerId} before file-info`);
-    return;
-  }
+  transfer = getOrCreateTransfer(peerId);
 
   if (data instanceof ArrayBuffer) {
     transfer.chunks.push(data);
@@ -136,6 +161,11 @@ export async function handleIncomingData(conn, data) {
     transfer.received += data.size;
   } else {
     log('warn', `Unknown data type from ${peerId}`);
+    return;
+  }
+
+  if (!transfer.hasInfo) {
+    log('debug', `Buffered ${transfer.received} bytes from ${peerId} before file-info`);
     return;
   }
 
