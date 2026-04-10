@@ -343,7 +343,11 @@ app.get('/filepaste', async (req, res) => {
       if (data.type === 'file-chunk') {
         fileChunks.push(Buffer.from(data.chunk));
         receivedSize += data.chunk.byteLength;
-        log('debug', `Paste SSE | File chunk received: ${receivedSize}/${fileMeta?.size}`);
+
+        // Notify progress
+        const progress = fileMeta?.size ? Math.round((receivedSize / fileMeta.size) * 100) : 0;
+        log('debug', `Paste SSE | File chunk received: ${receivedSize}/${fileMeta?.size} (${progress}%)`);
+        res.write(`data: Receiving: ${fileMeta.name} — ${receivedSize}/${fileMeta.size} bytes (${progress}%)\n\n`);
         return;
       }
 
