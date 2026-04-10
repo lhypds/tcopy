@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { writeClipboard, fetchRemoteClipboard, readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { resolvePath } from '../utils/pathUtils.js';
 import fs from 'fs';
+import EventSource from 'eventsource';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -18,33 +19,42 @@ if (!baseUrl) {
 // Client server port
 const port = process.env.PORT || 5460;
 
+const sseUrl = `http://localhost:${port}/paste`;
+
 async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
-  // Trigger paste
-  const response = await fetch(`http://localhost:${port}/paste?fromPeerId=${fromPeerId}&filePath=${encodeURIComponent(filePath)}&pasteTo=${encodeURIComponent(pasteTo)}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+  const params = new URLSearchParams({
+    fromPeerId: String(fromPeerId ?? ''),
+    filePath: String(filePath ?? ''),
+    pasteTo: String(pasteTo ?? ''),
   });
 
-  if (!response.ok) {
-    return false;
-  }
+  return await new Promise((resolve) => {
+    const es = new EventSource(`${sseUrl}?${params.toString()}`);
+    const timeout = setTimeout(() => {
+      es.close();
+      resolve(false);
+    }, 15000);
 
-  // Read and print SSE response
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
+    es.onmessage = (event) => {
+      if (event.data?.trim()) {
+        console.log('SSE:', event.data.trim());
+      }
+      clearTimeout(timeout);
+      es.close();
+      resolve(true);
+    };
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+    es.addEventListener('heartbeat', () => {
+      console.log(`SSE: heartbeat (server: ${baseUrl})`);
+      resetHeartbeat();
+    });
 
-    const chunk = decoder.decode(value);
-    if (chunk.trim()) {
-      console.log("SSE:", chunk.trim());
-    }
-  }
-  return true;
+    es.onerror = () => {
+      clearTimeout(timeout);
+      es.close();
+      resolve(false);
+    };
+  });
 }
 
 const remoteClipboardResult = await fetchRemoteClipboard(baseUrl);

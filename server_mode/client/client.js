@@ -222,34 +222,34 @@ async function connectAndWatchEvents() {
         resetHeartbeat();
       };
 
+      es.addEventListener('heartbeat', () => {
+        log('debug', `Heartbeat (server: ${baseUrl})`);
+        resetHeartbeat();
+      });
+
       es.onmessage = async event => {
         resetHeartbeat();
 
-        // Print raw event data for debugging
-        if (event.data.trim()) {
-          log('debug', `Received SSE data: ${event.data}`);
+        try {
+          const data = JSON.parse(event.data);
+          const { id: id_, text = '', timestamp = '' } = data;
+
+          if (id === id_) {
+            log('debug', 'Ignored as sent by self.');
+            return;
+          }
+
+          const contentReplaced = text
+            .replace(/\n/g, '<LF>')
+            .replace(/\r/g, '<CR>')
+            .replace(/\t/g, '<TAB>')
+            .replace(/ /g, '<SPACE>');
+
+          await clipboard.write(text);
+          log('info', `Content received(id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
+        } catch (e) {
+          log('error', `Error parsing data: ${e.message}`);
         }
-
-        // try {
-        //   const data = JSON.parse(event.data);
-        //   const { id: id_, text = '', timestamp = '' } = data;
-
-        //   if (id === id_) {
-        //     log('debug', 'Ignored as sent by self.');
-        //     return;
-        //   }
-
-        //   const contentReplaced = text
-        //     .replace(/\n/g, '<LF>')
-        //     .replace(/\r/g, '<CR>')
-        //     .replace(/\t/g, '<TAB>')
-        //     .replace(/ /g, '<SPACE>');
-
-        //   await clipboard.write(text);
-        //   log('info', `Content received (id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
-        // } catch (e) {
-        //   log('error', `Error parsing data: ${e.message}`);
-        // }
       };
 
       es.onerror = () => {
