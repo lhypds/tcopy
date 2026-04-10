@@ -22,11 +22,11 @@ export function setupConnection(conn) {
   }
 
   connections.set(conn.peer, conn);
-  conn.on("open", () => {
+  conn.on("open", async () => {
     log('info', `Connection open with ${conn.peer}`);
 
     // Send anything in clipboard buffer (file or content)
-    const clipboard = readClipboard();
+    const clipboard = await readClipboard();
     conn.send(clipboard);
   });
 
