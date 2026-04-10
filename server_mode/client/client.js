@@ -250,17 +250,34 @@ peer.on("close", () => {
   log('warn', `Peer close: server = ${baseUrl}/signal`);
 });
 
-// Local SSE route for accepting paste events and triggering PeerJS file transfer
+// Paste SSE: Local SSE route for accepting paste events and triggering PeerJS file transfer
 app.get('/filepaste', async (req, res) => {
   // Get paste parameters from query string
   const { fromPeerId, filePath, pasteTo } = req.query || {};
 
   // Log the paste request
-  log('info', `Received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
+  log('info', `Paste SSE: received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
 
   if (!fromPeerId) {
-    log('warn', 'Paste SSE request missing fromPeerId.');
+    log('warn', 'Paste SSE: request missing fromPeerId.');
     return res.status(400).json({ success: false, error: 'fromPeerId is required' });
+  }
+
+  if (!filePath) {
+    log('warn', 'Paste SSE: request missing filePath.');
+    return res.status(400).json({ success: false, error: 'filePath is required' });
+  }
+
+  if (!pasteTo) {
+    log('warn', 'Paste SSE: request missing pasteTo.');
+    return res.status(400).json({ success: false, error: 'pasteTo is required' });
+  }
+
+  // Check paste to path exists
+  const pasteToResolved = resolvePath(pasteTo);
+  if (!fs.existsSync(pasteToResolved) || !fs.statSync(pasteToResolved).isDirectory()) {
+    log('warn', `Paste SSE: request pasteTo path does not exist or is not a directory: pasteTo = ${pasteToResolved}`);
+    return res.status(400).json({ success: false, error: 'pasteTo path does not exist or is not a directory' });
   }
 
   // Set SSE headers
