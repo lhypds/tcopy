@@ -11,16 +11,7 @@ const incomingTransfers = new Map();
 const CHUNK_SIZE = 64 * 1024; // 64KB
 const MAX_BUFFERED_AMOUNT = 16 * CHUNK_SIZE; // 1MB
 
-
-export function downloadBlob(blob, fileName) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
+// Source peer
 export function setupConnection(conn) {
   if (connections.has(conn.peer)) {
     const oldConn = connections.get(conn.peer);
@@ -56,51 +47,32 @@ export function setupConnection(conn) {
   return conn;
 }
 
-export function connectToPeer(peer, fromPeerId, timeoutMs = 5000) {
+// Destination peer
+export function connectToPeer(peer, fromPeerId) {
   return new Promise((resolve, reject) => {
-    let settled = false;
-
     const conn = peer.connect(fromPeerId);
     if (!conn) {
       reject(new Error('peer.connect returned no connection'));
       return;
     }
 
-    const cleanup = () => {
-      clearTimeout(timer);
-      conn.off?.('open', onOpen);
-      conn.off?.('error', onError);
-    };
+    conn.on("open", () => {
+      log('info', `Connection open with ${conn.peer}`);
+    });
 
-    const onOpen = () => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      resolve();
-    };
+    conn.on("close", () => {
+      log('info', `Connection closed with ${conn.peer}`);
+      connections.delete(conn.peer);
+      incomingTransfers.delete(conn.peer);
+    });
 
-    const onError = (error) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      reject(error instanceof Error ? error : new Error(String(error)));
-    };
+    conn.on("error", (err) => {
+      log('error', `Connection error with ${conn.peer}: ${err.message || err}`);
+    });
 
-    const timer = setTimeout(() => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      reject(new Error(`Peer connection timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-
-    conn.once('open', onOpen);
-    conn.once('error', onError);
+    conn.on("data", async (data) => {
+      await handleIncomingData(conn, data);
+    });
   });
 }
 
@@ -129,8 +101,16 @@ export async function handleIncomingData(conn, data) {
     }
 
     const blob = new Blob(transfer.chunks, { type: transfer.mime });
-    downloadBlob(blob, transfer.name);
 
+    // Download blob (file)
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = transfer.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    // Clean up
     log('info', `Finished receiving "${transfer.name}" from ${peerId}`);
     incomingTransfers.delete(peerId);
     return;
