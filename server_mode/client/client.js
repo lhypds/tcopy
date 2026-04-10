@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import clipboard from 'clipboardy';
@@ -170,6 +171,7 @@ peer.on("open", (id) => {
   log('info', `Peer open: server = ${baseUrl}/signal`);
 });
 
+// Data source side
 peer.on("connection", (conn) => {
   globalThis.peerStatus = 'connection';
   log('info', `Peer connection: incoming connection peer = ${conn.peer}.`);
@@ -188,6 +190,43 @@ peer.on("connection", (conn) => {
 
   conn.on("data", async (data) => {
     log('info', `Peer connection | Connection data: received, connection peer = ${conn.peer}`);
+
+    // Handle file request
+    if (data && data.type === 'file_request' && data.filePath) {
+      log('info', `Peer connection | File request: filePath = ${data.filePath}`);
+
+      // Check file exist
+      if (!fs.existsSync(data.filePath)) {
+        log('warn', `Peer connection | File not found: filePath = ${data.filePath}`);
+        return;
+      }
+
+      // Send file
+      const fileName = path.basename(data.filePath);
+      const fileBuffer = fs.readFileSync(data.filePath);
+      const fileSize = fileBuffer.length;
+
+      // Send metadata first
+      conn.send({
+        type: 'file-meta',
+        name: fileName,
+        size: fileSize,
+        mime: 'application/octet-stream',
+      });
+
+      // Chunk and send
+      const chunkSize = 64 * 1024; // 64KB
+      let offset = 0;
+
+      while (offset < fileSize) {
+        const chunk = fileBuffer.slice(offset, offset + chunkSize);
+        conn.send({ type: 'file-chunk', chunk });
+        offset += chunkSize;
+      }
+
+      conn.send({ type: 'file-end' });
+      log('info', `Peer connection | File sent: filePath = ${data.filePath}, size = ${fileSize} bytes`);
+    }
   });
 });
 
@@ -229,21 +268,74 @@ app.get('/filepaste', async (req, res) => {
   try {
     // Keep connection alive with heartbeats
     const heartbeatInterval = startSseHeartbeat(res);
+
+    // Data destination side
     const conn = peer.connect(fromPeerId);
+
+    // File receive state
+    let fileMeta = null;
+    let fileChunks = [];
+    let receivedSize = 0;
 
     conn.on('open', () => {
       log('info', `Paste SSE | Connection open: peer = ${conn.peer}`);
 
-      // Send success event
+      // Send success SSE message
       res.write(`data: Connected to peer (id: ${conn.peer})\n\n`);
+
+      // Send filePath for verification
+      conn.send({ type: 'file_request', filePath });
+    });
+
+    conn.on("close", () => {
+      log('info', `Paste SSE | Connection closed: connection peer = ${conn.peer}`);
+
+      // Send close SSE message
+      res.write(`data: Connection closed (id: ${fromPeerId}).\n\n`);
+      clearInterval(heartbeatInterval);
+      res.end();
     });
 
     conn.on('error', (error) => {
       log('error', `Paste SSE | Connection error: peer = ${conn.peer}, error = ${error.message || error}`);
 
+      // Send error SSE message
       res.write(`data: Connection error (id: ${fromPeerId}).\n\n`);
       clearInterval(heartbeatInterval);
       res.end();
+    });
+
+    conn.on("data", async (data) => {
+      log('info', `Paste SSE | Connection data: received, connection peer = ${conn.peer}`);
+
+      // Handle file transfer
+      if (data.type === 'file-meta') {
+        fileMeta = data;
+        fileChunks = [];
+        receivedSize = 0;
+        log('info', `Paste SSE | File meta received: name = ${fileMeta.name}, size = ${fileMeta.size}`);
+        res.write(`data: Receiving file: ${fileMeta.name} (${fileMeta.size} bytes)\n\n`);
+        return;
+      }
+
+      if (data.type === 'file-chunk') {
+        fileChunks.push(Buffer.from(data.chunk));
+        receivedSize += data.chunk.byteLength;
+        log('debug', `Paste SSE | File chunk received: ${receivedSize}/${fileMeta?.size}`);
+        return;
+      }
+
+      if (data.type === 'file-end') {
+        const fileBuffer = Buffer.concat(fileChunks);
+        const destDir = pasteTo || process.cwd();
+        const destPath = path.join(destDir, fileMeta.name);
+
+        fs.mkdirSync(destDir, { recursive: true });
+        fs.writeFileSync(destPath, fileBuffer);
+
+        log('info', `Paste SSE | File saved: path = ${destPath}, size = ${fileBuffer.length} bytes`);
+        res.write(`data: File saved: ${destPath}\n\n`);
+      }
     });
 
     // Clean up on client disconnect
