@@ -198,6 +198,9 @@ peer.on("connection", (conn) => {
       // Check file exist
       if (!fs.existsSync(data.filePath)) {
         log('warn', `Peer connection | File not found: filePath = ${data.filePath}`);
+
+        // Close connection
+        conn.close();
         return;
       }
 
