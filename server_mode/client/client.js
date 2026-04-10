@@ -274,9 +274,9 @@ app.get('/filepaste', async (req, res) => {
   }
 
   // Check paste to path exists
-  const pasteToResolved = resolvePath(pasteTo);
-  if (!fs.existsSync(pasteToResolved) || !fs.statSync(pasteToResolved).isDirectory()) {
-    log('warn', `Paste SSE: request pasteTo path does not exist or is not a directory: pasteTo = ${pasteToResolved}`);
+  const pasteTo_ = resolvePath(pasteTo);
+  if (!fs.existsSync(pasteTo_) || !fs.statSync(pasteTo_).isDirectory()) {
+    log('warn', `Paste SSE: request pasteTo path does not exist or is not a directory: pasteTo = ${pasteTo_}`);
     return res.status(400).json({ success: false, error: 'pasteTo path does not exist or is not a directory' });
   }
 
