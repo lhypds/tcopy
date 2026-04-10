@@ -7,6 +7,7 @@ import { writeId } from '../utils/idUtils.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
+import { SSE_HEARTBEAT_INTERVAL } from '../constants.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -17,7 +18,6 @@ const log = createLogger('server.log');
 const port = process.env.PORT || 5460;
 const clipboardFile = 'clipboard.txt';
 const watchInterval = 300;
-const heartbeatIntervalMs = 30 * 1000;
 
 // Express server
 const app = express();
@@ -119,7 +119,7 @@ app.get('/sse', (req, res) => {
     if (!res.writableEnded) {
       res.write(`data: ${JSON.stringify({ text: '###ALIVE###', timestamp: new Date().toISOString() })}\n\n`);
     }
-  }, heartbeatIntervalMs);
+  }, SSE_HEARTBEAT_INTERVAL);
 
   req.on('close', () => {
     clearInterval(heartbeatTimer);

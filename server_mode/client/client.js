@@ -3,10 +3,11 @@ import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import clipboard from 'clipboardy';
 import dotenv from 'dotenv';
-import { writeId } from '../utils/idUtils.js';
+import { readId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
 import { setupConnection, connectToPeer } from '../utils/peerUtils.js';
+import { RECONNECT_DELAY, SSE_HEARTBEAT_INTERVAL } from '../constants.js';
 import express from 'express';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,10 +36,7 @@ const peerjsModule = await import("peerjs");
 const peerjs = peerjsModule.default ?? peerjsModule;
 const { Peer } = peerjs;
 
-const HEARTBEAT_TIMEOUT = 40_000; // ms
-const RECONNECT_DELAY = 10_000; // ms
-
-const id = writeId(path.join(__dirname, 'id'));
+const id = readId(path.join(__dirname, 'id'));
 
 // Logger
 const log = createLogger('client.log');
@@ -161,16 +159,17 @@ app.get('/paste', async (req, res) => {
 
   // Connect to the peer to trigger file transfer
   try {
-    // await connectToPeer(peer, fromPeerId);
-
     // Send success event
-    res.write(`data: ${JSON.stringify({ success: true, message: 'Connected to peer' })}\n\n`);
+    res.write(`data: Connected to peer (id: ${fromPeerId})\n\n`);
     log('info', `Successfully connected to peer ${fromPeerId}`);
+
+    // TODO: trigger file transfer
+    // await connectToPeer(peer, fromPeerId);
 
     // Keep connection alive with heartbeats
     const heartbeatInterval = setInterval(() => {
       res.write(`: heartbeat\n\n`);
-    }, 30000);
+    }, SSE_HEARTBEAT_INTERVAL);
 
     // Clean up on client disconnect
     req.on('close', () => {
@@ -180,7 +179,7 @@ app.get('/paste', async (req, res) => {
     });
   } catch (error) {
     log('error', `Failed to connect to peer ${fromPeerId}: ${error.message || error}`);
-    res.write(`data: ${JSON.stringify({ success: false, error: 'Failed to connect to peer' })}\n\n`);
+    res.write(`data: Failed to connect to peer (id: ${fromPeerId})\n\n`);
     res.end();
   }
 });
@@ -212,10 +211,10 @@ async function connectAndWatchEvents(baseUrl, id) {
         clearTimeout(heartbeatTimer);
         heartbeatTimer = setTimeout(() => {
           globalThis.sseStatus = 'reconnecting';
-          log('warning', `No heartbeat received for ${HEARTBEAT_TIMEOUT / 1000}s. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+          log('warning', `No heartbeat received. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
           es.close();
           resolve();
-        }, HEARTBEAT_TIMEOUT);
+        }, SSE_HEARTBEAT_INTERVAL * 1.5);
       }
 
       const es = new EventSource(sseUrl);
