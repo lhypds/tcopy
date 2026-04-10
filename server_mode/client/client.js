@@ -332,7 +332,7 @@ app.get('/filepaste', async (req, res) => {
 
       if (data.type === 'file-end') {
         const fileBuffer = Buffer.concat(fileChunks);
-        const destDir = pasteTo || process.cwd();
+        const destDir = resolvePath(pasteTo);
         const destPath = path.join(destDir, fileMeta.name);
 
         fs.mkdirSync(destDir, { recursive: true });
@@ -340,6 +340,14 @@ app.get('/filepaste', async (req, res) => {
 
         log('info', `Paste SSE | File saved: path = ${destPath}, size = ${fileBuffer.length} bytes`);
         res.write(`data: File saved: ${destPath}\n\n`);
+
+        // Clear state
+        fileMeta = null;
+        fileChunks = [];
+        receivedSize = 0;
+
+        // Close connection
+        conn.close();
       }
     });
 
