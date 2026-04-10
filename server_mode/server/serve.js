@@ -108,7 +108,7 @@ app.get('/', (req, res) => {
 // Route for Server-Sent Events to watch file changes
 app.get('/sse', (req, res) => {
   const clientId = req.query.id || 'unknown';
-  log('info', `Client (id: ${clientId}) connected to /sse endpoint.`);
+  log('info', `Client (id: ${clientId}), connected to /sse endpoint.`);
 
   // Send an initial heartbeat to establish the connection
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -121,7 +121,7 @@ app.get('/sse', (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeatInterval);
-    log('info', `Client (id: ${clientId}) disconnected from /sse endpoint.`);
+    log('info', `Client (id: ${clientId}), disconnected from /sse endpoint.`);
   });
 
   watchFileEvents(req, res);
@@ -160,4 +160,45 @@ const server = app.listen(port, () => {
 const peerServer = ExpressPeerServer(server, {
   debug: true,
 });
+
+const activePeerIds = new Set();
+
+peerServer.on('connection', (client) => {
+  const peerId = client?.getId?.() || 'unknown';
+
+  activePeerIds.add(peerId);
+  log('info', `Client (id: ${peerId}), peer connected. Active peers: ${activePeerIds.size}.`);
+
+  if (activePeerIds.size > 0) {
+    console.log('\nActive peers:', Array.from(activePeerIds));
+    console.log('');
+  }
+});
+
+peerServer.on('disconnect', (client) => {
+  const peerId = client?.getId?.() || 'unknown';
+
+  activePeerIds.delete(peerId);
+  log('info', `Client (id: ${peerId}), peer disconnected. Active peers: ${activePeerIds.size}.`);
+
+  if (activePeerIds.size > 0) {
+    console.log('\nActive peers:', Array.from(activePeerIds));
+    console.log('');
+  }
+});
+
+peerServer.on('message', (client, message) => {
+  const peerId = client?.getId?.() || 'unknown';
+  log('debug', `Client (id: ${peerId}), peer message: ${JSON.stringify(message)}`);
+});
+
+peerServer.on('error', (error) => {
+  const message = error?.message || String(error);
+  log('error', `Peer server error: ${message} `);
+});
+
+peerServer.on('close', () => {
+  log('info', 'Peer server closed.');
+});
+
 app.use("/signal", peerServer);
