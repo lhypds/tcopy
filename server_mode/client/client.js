@@ -167,12 +167,12 @@ const peer = new Peer(id, {
 
 peer.on("open", (id) => {
   globalThis.peerStatus = 'connected';
-  log('info', `Peer open: peer (id: ${id})`);
+  log('info', `Peer open: server: ${baseUrl}/signal`);
 });
 
 peer.on("connection", (conn) => {
   globalThis.peerStatus = 'connection';
-  log('info', `Peer connection: incoming connection from peer (id: ${conn.peer}).`);
+  log('info', `Peer connection: incoming connection peer (id: ${conn.peer}).`);
 
   conn.on("open", async () => {
     log('info', `Peer connection | connection open: connection peer (id: ${conn.peer})`);
