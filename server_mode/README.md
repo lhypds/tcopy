@@ -31,13 +31,13 @@ or
 * Endpoints  
 
 GET /  
-Get clipboard content.  
+Get server clipboard content.  
 
 POST /  
-Update clipboard content.  
+Update server clipboard content.  
 
 GET /sse  
-Subscribe to clipboard updates.  
+Subscribe to server clipboard updates.  
 
 GET /signal  
 PeerJS (peer server) signaling endpoint.  
