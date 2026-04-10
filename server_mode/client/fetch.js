@@ -44,8 +44,8 @@ async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
       resolve(true);
     };
 
-    es.addEventListener('heartbeat', () => {
-      console.log(`SSE: heartbeat (server: ${baseUrl})`);
+    es.addEventListener('heartbeat', (e) => {
+      console.log(`SSE: Heartbeat (server: ${baseUrl}, data: ${e.data})`);
       resetHeartbeat();
     });
 

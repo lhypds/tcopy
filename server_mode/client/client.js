@@ -8,7 +8,7 @@ import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
 import { setupConnection, connectToPeer } from '../utils/peerUtils.js';
 import { startSseHeartbeat, resetSseTimeout } from '../utils/sseUtils.js';
-import { RECONNECT_DELAY, SSE_HEARTBEAT_INTERVAL } from '../constants.js';
+import { RECONNECT_DELAY } from '../constants.js';
 import express from 'express';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -222,8 +222,8 @@ async function connectAndWatchEvents() {
         resetHeartbeat();
       };
 
-      es.addEventListener('heartbeat', () => {
-        log('debug', `Heartbeat (server: ${baseUrl})`);
+      es.addEventListener('heartbeat', (e) => {
+        log('debug', `Heartbeat (server: ${baseUrl}, data: ${e.data})`);
         resetHeartbeat();
       });
 
