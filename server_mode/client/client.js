@@ -103,12 +103,12 @@ async function connectAndWatchEvents() {
       const es = new EventSource(sseUrl);
       es.onopen = () => {
         globalThis.sseStatus = 'connected';
-        log('info', `Connected to SSE endpoint: ${sseUrl}`);
+        log('info', `SSE: connected to SSE endpoint: ${sseUrl}`);
         resetHeartbeat();
       };
 
       es.addEventListener('heartbeat', (e) => {
-        log('debug', `Heartbeat (server: ${baseUrl}, data: ${e.data})`);
+        log('debug', `SSE: heartbeat (server: ${baseUrl}, data: ${e.data})`);
         resetHeartbeat();
       });
 
@@ -120,7 +120,7 @@ async function connectAndWatchEvents() {
           const { id: id_, text = '', timestamp = '' } = data;
 
           if (id === id_) {
-            log('debug', 'Ignored as sent by self.');
+            log('debug', 'SSE: Ignored as sent by self.');
             return;
           }
 
@@ -131,16 +131,16 @@ async function connectAndWatchEvents() {
             .replace(/ /g, '<SPACE>');
 
           await clipboard.write(text);
-          log('info', `Content received(id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
+          log('info', `SSE: content received(id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
         } catch (e) {
-          log('error', `Error parsing data: ${e.message}`);
+          log('error', `SSE: error parsing data: ${e.message}`);
         }
       };
 
       es.onerror = () => {
         clearTimeout(heartbeatTimer);
         globalThis.sseStatus = 'reconnecting';
-        log('warning', `Server connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+        log('warning', `SSE: connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
         es.close();
         resolve();
       };
@@ -149,10 +149,13 @@ async function connectAndWatchEvents() {
     await sleep(RECONNECT_DELAY);
   }
 }
+
+log('info', `Connecting to SSE endpoint: ${sseUrl}...`);
 connectAndWatchEvents();
 
 // ---- II. PeerJS client for WebRTC connections ---------------------
 // PeerJS client for WebRTC
+log('info', `Connecting to peer signaling endpoint: ${peerSignalUrl}`);
 const url = new URL(baseUrl);
 const peer = new Peer(id, {
   host: url.hostname,
@@ -167,7 +170,7 @@ const peer = new Peer(id, {
   },
 });
 
-peer.on("open", (id) => {
+peer.on("open", () => {
   globalThis.peerStatus = 'connected';
   log('info', `Peer open: server = ${baseUrl}/signal`);
 });
