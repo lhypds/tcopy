@@ -218,6 +218,7 @@ async function connectPeer() {
               return;
             }
 
+            log('info', `Peer | File request valid, send file: filePath = ${filePath}`);
             const fileName = path.basename(filePath);
             const fileSize = fs.statSync(filePath).size;
             const chunkSize = 64 * 1024; // 64KB
