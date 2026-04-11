@@ -103,7 +103,7 @@ async function connectSSE() {
       const es = new EventSource(sseUrl);
       es.onopen = () => {
         globalThis.sseStatus = 'connected';
-        log('info', `SSE: connected to SSE endpoint: ${sseUrl}`);
+        log('info', `SSE: Connected to SSE endpoint: ${sseUrl}`);
         resetHeartbeat();
       };
 
@@ -185,9 +185,10 @@ async function connectPeer() {
       }, RECONNECT_DELAY * 1.5);
 
       peer.on("open", () => {
-        clearTimeout(connectTimeout);
+        log('info', `Peer: Open: server = ${peerSignalUrl}`);
+
         globalThis.peerStatus = 'connected';
-        log('info', `Peer: open: server = ${peerSignalUrl}`);
+        clearTimeout(connectTimeout);
       });
 
       // Data source side: handle incoming connections and serve file requests
@@ -248,22 +249,25 @@ async function connectPeer() {
       });
 
       peer.on("error", (err) => {
+        log('info', `Peer: Error, error = ${err.message}`);
+
         globalThis.peerStatus = 'error';
         clearTimeout(connectTimeout);
-        log('warning', `Peer: Error: server = ${peerSignalUrl}, error = ${err.message || err}`);
         // Destroy triggers 'close', which resolves and falls into the reconnect loop
         peer.destroy();
       });
 
       peer.on("disconnected", () => {
-        globalThis.peerStatus = 'reconnecting';
         log('info', `Peer: Disconnected from signaling server.`);
+
+        globalThis.peerStatus = 'reconnecting';
       });
 
       peer.on("close", () => {
+        log('info', `Peer: Closed.`);
+
         globalThis.peerStatus = 'closed';
         clearTimeout(connectTimeout);
-        log('info', `Peer: Closed.`);
         resolve();
       });
     });
