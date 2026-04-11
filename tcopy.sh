@@ -235,7 +235,7 @@ showInfo() {
 }
 
 printUsage() {
-	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
+	echo "Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
 }
 
 case "$command" in
