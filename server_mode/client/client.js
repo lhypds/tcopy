@@ -233,15 +233,26 @@ async function connectPeer() {
 
             // Stream chunks to avoid loading the entire file into memory
             const stream = fs.createReadStream(filePath, { highWaterMark: chunkSize });
-            for await (const chunk of stream) {
-              while (conn.dataChannel && conn.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-                await sleep(50);
+            try {
+              for await (const chunk of stream) {
+                if (!conn.open) {
+                  log('warn', `Peer | Connection: Data, connection closed mid-transfer, aborting: filePath = ${filePath}`);
+                  stream.destroy();
+                  return;
+                }
+                while (conn.dataChannel && conn.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+                  await sleep(50);
+                }
+                conn.send({ type: 'file-chunk', chunk });
               }
-              conn.send({ type: 'file-chunk', chunk });
+            } catch (error) {
+              log('error', `Peer | Connection: Data, file send error, filePath = ${filePath}, error = ${JSON.stringify(error)}`);
+              stream.destroy();
+              return;
             }
 
             conn.send({ type: 'file-end' });
-            log('info', `Peer | File sent: filePath = ${filePath}, size = ${fileSize} bytes`);
+            log('info', `Peer | Connection: Data, file sent: filePath = ${filePath}, size = ${fileSize} bytes`);
           }
         });
       });
