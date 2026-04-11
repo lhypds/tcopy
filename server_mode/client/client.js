@@ -62,12 +62,6 @@ const peerSignalUrl = `${baseUrl}/signal`;
 globalThis.sseStatus = 'starting';
 globalThis.peerStatus = 'starting';
 
-process.on('SIGINT', () => {
-  globalThis.sseStatus = 'disconnected';
-  log('info', 'Stopped by user.');
-  process.exit(0);
-});
-
 // Express server (client local server)
 const app = express();
 app.use(express.json());
@@ -438,7 +432,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   // Log server start message
   log('info', `Server (client local server) is running at \`http://localhost:${port}\`.`);
 
@@ -453,3 +447,40 @@ app.listen(port, () => {
   });
   console.log('');
 });
+
+// Handle graceful shutdown on Ctrl+C / SIGTERM
+function shutdown(signal) {
+  log('info', `Shutdown: Received ${signal}, shutting down...`);
+
+  globalThis.sseStatus = 'disconnected';
+  globalThis.peerStatus = 'closed';
+
+  // Close PeerJS
+  if (peer) {
+    try {
+      peer.destroy();
+      log('info', 'Shutdown: Peer destroyed.');
+    } catch (e) {
+      log('warn', `Shutdown: Error destroying peer: ${e.message}`);
+    }
+  }
+
+  // Close HTTP server (stop accepting new connections)
+  server.close((err) => {
+    if (err) {
+      log('warn', `Shutdown: Error closing HTTP server: ${err.message}`);
+    } else {
+      log('info', 'Shutdown: HTTP server closed.');
+    }
+    process.exit(0);
+  });
+
+  // Force exit if server hasn't closed within 5s
+  setTimeout(() => {
+    log('warn', 'Shutdown: Forced exit after timeout.');
+    process.exit(1);
+  }, 5000).unref();
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
