@@ -102,17 +102,19 @@ async function connectSSE() {
 
       const es = new EventSource(sseUrl);
       es.onopen = () => {
+        log('info', `SSE: Open, endpoint = ${sseUrl}`);
+
         globalThis.sseStatus = 'connected';
-        log('info', `SSE: Connected to SSE endpoint: ${sseUrl}`);
         resetHeartbeat();
       };
 
       es.addEventListener('heartbeat', (e) => {
-        log('debug', `SSE: heartbeat (server: ${baseUrl}, data: ${e.data})`);
+        log('debug', `SSE: Heartbeat, server = ${baseUrl}, data = ${e.data}`);
         resetHeartbeat();
       });
 
       es.onmessage = async event => {
+        log('debug', `SSE: Message, event data = ${event.data}`);
         resetHeartbeat();
 
         try {
@@ -120,7 +122,7 @@ async function connectSSE() {
           const { id: id_, text = '', timestamp = '' } = data;
 
           if (id === id_) {
-            log('debug', 'SSE: Ignored as sent by self.');
+            log('debug', 'SSE: Message, send to self, ignored.');
             return;
           }
 
@@ -131,16 +133,17 @@ async function connectSSE() {
             .replace(/ /g, '<SPACE>');
 
           await clipboard.write(text);
-          log('info', `SSE: Content received(id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
+          log('info', `SSE: Message, content received, from id = ${id_}, data timestamp = ${timestamp}), content = \`${contentReplaced}\``);
         } catch (e) {
-          log('error', `SSE: Error parsing data: ${e.message}`);
+          log('error', `SSE: Message, error, error = ${e.message}`);
         }
       };
 
       es.onerror = (error) => {
+        log('info', `SSE: Error, error = ${error.message || error}.`);
+
         clearTimeout(heartbeatTimer);
         globalThis.sseStatus = 'reconnecting';
-        log('info', `SSE: Connection error.`);
         es.close();
         resolve();
       };
