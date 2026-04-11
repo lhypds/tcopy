@@ -327,6 +327,7 @@ app.get('/filepaste', async (req, res) => {
     let fileMeta = null;
     let fileChunks = [];
     let receivedSize = 0;
+    let lastNotifiedProgress = -1;
 
     conn.on('open', () => {
       log('info', `Paste SSE | Peer Connection: Open, peer = ${conn.peer}`);
@@ -357,10 +358,10 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on("data", async (data) => {
-      log('info', `Paste SSE | Peer connection: Data, received, peer = ${conn.peer}, data type = ${data?.type || 'unknown'}`);
 
       // Handle file transfer
       if (data.type === 'file-meta') {
+        log('info', `Paste SSE | Peer connection: Data, file meta received, peer = ${conn.peer}, meta = ${JSON.stringify(data)}`);
         fileMeta = data;
         fileChunks = [];
         receivedSize = 0;
@@ -374,13 +375,17 @@ app.get('/filepaste', async (req, res) => {
         receivedSize += data.chunk.byteLength;
 
         // Notify progress
-        const progress = fileMeta?.size ? Math.round((receivedSize / fileMeta.size) * 100) : 0;
-        log('debug', `Paste SSE | Data: File chunk received: ${receivedSize}/${fileMeta?.size} (${progress}%)`);
-        res.write(`data: Receiving: ${fileMeta.name} — ${receivedSize}/${fileMeta.size} bytes (${progress}%)\n\n`);
+        const progress = fileMeta?.size ? (receivedSize / fileMeta.size) * 100 : 0;
+        if (progress >= lastNotifiedProgress + 0.1) {
+          lastNotifiedProgress = progress;
+          res.write(`data: Receiving: ${fileMeta.name} — ${receivedSize}/${fileMeta.size} bytes (${progress.toFixed(1)}%)\n\n`);
+        }
         return;
       }
 
       if (data.type === 'file-end') {
+        log('info', `Paste SSE | Peer connection: Data, file end received, peer = ${conn.peer}`);
+
         const fileBuffer = Buffer.concat(fileChunks);
         const destDir = resolvePath(pasteTo);
         const destPath = path.join(destDir, fileMeta.name);
