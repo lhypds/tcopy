@@ -429,6 +429,12 @@ app.get('/filepaste', async (req, res) => {
     req.on('close', () => {
       log('info', `Paste SSE | Request: Close, peer = ${fromPeerId}`);
 
+      // Ensure PeerJS connection is closed
+      if (conn && conn.open) conn.close();
+
+      // Ensure write stream is closed if client disconnects
+      if (writeStream && !writeStream.closed) writeStream.destroy();
+
       clearInterval(heartbeatInterval);
       res.end();
     });
