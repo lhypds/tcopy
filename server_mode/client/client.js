@@ -185,7 +185,7 @@ async function connectPeer() {
       }, RECONNECT_DELAY * 1.5);
 
       peer.on("open", () => {
-        log('info', `Peer: Open: server = ${peerSignalUrl}`);
+        log('info', `Peer: Open, server = ${peerSignalUrl}`);
 
         globalThis.peerStatus = 'connected';
         clearTimeout(connectTimeout);
@@ -196,27 +196,27 @@ async function connectPeer() {
         log('info', `Peer: Incoming connection from peer = ${conn.peer}.`);
 
         conn.on("open", () => {
-          log('info', `Peer connection | Open: peer = ${conn.peer}`);
+          log('info', `Peer | Connection: Open, peer = ${conn.peer}`);
         });
 
         conn.on("close", () => {
-          log('info', `Peer connection | Closed: peer = ${conn.peer}`);
+          log('info', `Peer | Connection: Closed, peer = ${conn.peer}`);
         });
 
         conn.on("error", (err) => {
-          log('error', `Peer connection | Error: peer = ${conn.peer}, error = ${err.message || err}`);
+          log('error', `Peer | Connection: Error, peer = ${conn.peer}, error = ${err.message || err}`);
         });
 
         conn.on("data", async (data) => {
-          log('info', `Peer connection | Data received: peer = ${conn.peer}`);
+          log('info', `Peer | Connection: Data, received, peer = ${conn.peer}, data type = ${data?.type || 'unknown'}`);
 
           // Handle file request
           if (data && data.type === 'file_request' && data.filePath) {
-            log('info', `Peer connection | File request: filePath = ${data.filePath}`);
+            log('info', `Peer | Connection: Data, file request, filePath = ${data.filePath}`);
 
             const filePath = resolvePath(data.filePath);
             if (!fs.existsSync(filePath)) {
-              log('warn', `Peer connection | File not found: filePath = ${filePath}`);
+              log('warn', `Peer | File not found: filePath = ${filePath}`);
               conn.close();
               return;
             }
@@ -243,7 +243,7 @@ async function connectPeer() {
             }
 
             conn.send({ type: 'file-end' });
-            log('info', `Peer connection | File sent: filePath = ${filePath}, size = ${fileSize} bytes`);
+            log('info', `Peer | File sent: filePath = ${filePath}, size = ${fileSize} bytes`);
           }
         });
       });
@@ -259,7 +259,7 @@ async function connectPeer() {
       });
 
       peer.on("disconnected", () => {
-        log('info', `Peer: Disconnected from signaling server.`);
+        log('info', `Peer: Disconnected.`);
 
         globalThis.peerStatus = 'reconnecting';
       });
