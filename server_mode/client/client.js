@@ -331,7 +331,7 @@ app.get('/filepaste', async (req, res) => {
     let receivedSize = 0;
 
     conn.on('open', () => {
-      log('info', `Paste SSE | Connection: Open, peer = ${conn.peer}`);
+      log('info', `Paste SSE | Peer Connection: Open, peer = ${conn.peer}`);
 
       // Send success SSE message
       res.write(`data: Connected to peer (id: ${conn.peer})\n\n`);
@@ -341,7 +341,7 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on("close", () => {
-      log('info', `Paste SSE | Connection: Closed, peer = ${conn.peer}`);
+      log('info', `Paste SSE | Peer connection: Closed, peer = ${conn.peer}`);
 
       // Send close SSE message
       res.write(`data: Connection closed (id: ${fromPeerId}).\n\n`);
@@ -350,7 +350,7 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on('error', (error) => {
-      log('error', `Paste SSE | Connection: Error, peer = ${conn.peer}, error = ${error.message || error}`);
+      log('error', `Paste SSE | Peer connection: Error, peer = ${conn.peer}, error = ${error.message || error}`);
 
       // Send error SSE message
       res.write(`data: Connection error (id: ${fromPeerId}).\n\n`);
@@ -359,14 +359,14 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on("data", async (data) => {
-      log('info', `Paste SSE | Connection: Data, received, peer = ${conn.peer}, data type = ${data?.type || 'unknown'}`);
+      log('info', `Paste SSE | Peer connection: Data, received, peer = ${conn.peer}, data type = ${data?.type || 'unknown'}`);
 
       // Handle file transfer
       if (data.type === 'file-meta') {
         fileMeta = data;
         fileChunks = [];
         receivedSize = 0;
-        log('info', `Paste SSE | File meta received: name = ${fileMeta.name}, size = ${fileMeta.size}`);
+        log('info', `Paste SSE | Data: File meta received: name = ${fileMeta.name}, size = ${fileMeta.size}`);
         res.write(`data: Receiving file: ${fileMeta.name} (${fileMeta.size} bytes)\n\n`);
         return;
       }
@@ -377,7 +377,7 @@ app.get('/filepaste', async (req, res) => {
 
         // Notify progress
         const progress = fileMeta?.size ? Math.round((receivedSize / fileMeta.size) * 100) : 0;
-        log('debug', `Paste SSE | File chunk received: ${receivedSize}/${fileMeta?.size} (${progress}%)`);
+        log('debug', `Paste SSE | Data: File chunk received: ${receivedSize}/${fileMeta?.size} (${progress}%)`);
         res.write(`data: Receiving: ${fileMeta.name} — ${receivedSize}/${fileMeta.size} bytes (${progress}%)\n\n`);
         return;
       }
@@ -390,7 +390,7 @@ app.get('/filepaste', async (req, res) => {
         fs.mkdirSync(destDir, { recursive: true });
         fs.writeFileSync(destPath, fileBuffer);
 
-        log('info', `Paste SSE | File saved: path = ${destPath}, size = ${fileBuffer.length} bytes`);
+        log('info', `Paste SSE | Data: File saved: path = ${destPath}, size = ${fileBuffer.length} bytes`);
         res.write(`data: File saved: ${destPath}\n\n`);
 
         // Clear state
@@ -411,7 +411,7 @@ app.get('/filepaste', async (req, res) => {
       res.end();
     });
   } catch (error) {
-    log('error', `Peer SSE: Paste SSE failed with error: ${error.message || error}`);
+    log('error', `Paste SSE: Paste SSE failed with error: ${error.message || error}`);
 
     res.write(`data: Error (id: ${fromPeerId}).\n\n`);
     res.end();
