@@ -325,7 +325,7 @@ app.get('/filepaste', async (req, res) => {
 
     // File receive state
     let fileMeta = null;
-    let fileChunks = [];
+    let writeStream = null;
     let receivedSize = 0;
     let lastNotifiedProgress = -1;
 
@@ -342,6 +342,9 @@ app.get('/filepaste', async (req, res) => {
     conn.on("close", () => {
       log('info', `Paste SSE | Peer connection: Closed, peer = ${conn.peer}`);
 
+      // Ensure write stream is closed on unexpected disconnect
+      if (writeStream && !writeStream.closed) writeStream.destroy();
+
       // Send close SSE message
       res.write(`data: Connection closed (id: ${fromPeerId}).\n\n`);
       clearInterval(heartbeatInterval);
@@ -350,6 +353,8 @@ app.get('/filepaste', async (req, res) => {
 
     conn.on('error', (error) => {
       log('error', `Paste SSE | Peer connection: Error, peer = ${conn.peer}, error = ${JSON.stringify(error)}`);
+
+      if (writeStream && !writeStream.closed) writeStream.destroy();
 
       // Send error SSE message
       res.write(`data: Connection error (id: ${fromPeerId}).\n\n`);
@@ -362,15 +367,22 @@ app.get('/filepaste', async (req, res) => {
       if (data.type === 'file-meta') {
         log('info', `Paste SSE | Peer connection: Data, file meta received, peer = ${conn.peer}, meta = ${JSON.stringify(data)}`);
         fileMeta = data;
-        fileChunks = [];
         receivedSize = 0;
+        lastNotifiedProgress = -1;
+
+        // Open write stream immediately so chunks stream straight to disk
+        const destDir = resolvePath(pasteTo);
+        const destPath = path.join(destDir, fileMeta.name);
+        fs.mkdirSync(destDir, { recursive: true });
+        writeStream = fs.createWriteStream(destPath);
+
         log('info', `Paste SSE | Data: File meta received: name = ${fileMeta.name}, size = ${fileMeta.size}`);
         res.write(`data: Receiving file: ${fileMeta.name} (${fileMeta.size} bytes)\n\n`);
         return;
       }
 
       if (data.type === 'file-chunk') {
-        fileChunks.push(Buffer.from(data.chunk));
+        writeStream.write(Buffer.from(data.chunk));
         receivedSize += data.chunk.byteLength;
 
         // Notify progress
@@ -385,19 +397,20 @@ app.get('/filepaste', async (req, res) => {
       if (data.type === 'file-end') {
         log('info', `Paste SSE | Peer connection: Data, file end received, peer = ${conn.peer}`);
 
-        const fileBuffer = Buffer.concat(fileChunks);
         const destDir = resolvePath(pasteTo);
         const destPath = path.join(destDir, fileMeta.name);
 
-        fs.mkdirSync(destDir, { recursive: true });
-        fs.writeFileSync(destPath, fileBuffer);
+        // Flush and close the write stream before reporting success
+        await new Promise((resolve, reject) => {
+          writeStream.end(err => err ? reject(err) : resolve());
+        });
 
-        log('info', `Paste SSE | Data: File saved: path = ${destPath}, size = ${fileBuffer.length} bytes`);
+        log('info', `Paste SSE | Data: File saved: path = ${destPath}, size = ${receivedSize} bytes`);
         res.write(`data: File saved: ${destPath}\n\n`);
 
         // Clear state
         fileMeta = null;
-        fileChunks = [];
+        writeStream = null;
         receivedSize = 0;
 
         // Close connection
