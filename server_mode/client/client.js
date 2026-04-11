@@ -253,6 +253,7 @@ async function connectPeer() {
 
         globalThis.peerStatus = 'error';
         clearTimeout(connectTimeout);
+
         // Destroy triggers 'close', which resolves and falls into the reconnect loop
         peer.destroy();
       });
