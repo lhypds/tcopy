@@ -358,7 +358,6 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on("data", async (data) => {
-
       // Handle file transfer
       if (data.type === 'file-meta') {
         log('info', `Paste SSE | Peer connection: Data, file meta received, peer = ${conn.peer}, meta = ${JSON.stringify(data)}`);
