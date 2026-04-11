@@ -389,7 +389,14 @@ app.get('/filepaste', async (req, res) => {
         const progress = fileMeta?.size ? (receivedSize / fileMeta.size) * 100 : 0;
         if (progress >= lastNotifiedProgress + 0.1) {
           lastNotifiedProgress = progress;
-          res.write(`data: Receiving: ${fileMeta.name} — ${receivedSize}/${fileMeta.size} bytes (${progress.toFixed(1)}%)\n\n`);
+          const progressJson = {
+            type: 'progress',
+            name: fileMeta.name,
+            receivedSize,
+            totalSize: fileMeta.size,
+            progress: parseFloat(progress.toFixed(1)),
+          };
+          res.write(`data: ${JSON.stringify(progressJson)}\n\n`);
         }
         return;
       }
