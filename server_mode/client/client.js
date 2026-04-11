@@ -403,7 +403,15 @@ app.get('/filepaste', async (req, res) => {
           const progressJson = {
             type: 'progress',
             name: fileMeta.name,
-            receivedSize,
+            copyFrom: {
+              peerId: fromPeerId,
+              path: filePath,
+            },
+            pasteTo: {
+              peerId: id,
+              path: pasteTo,
+            },
+            receivedSize: receivedSize,
             totalSize: fileMeta.size,
             progress: parseFloat(progress.toFixed(1)),
           };
