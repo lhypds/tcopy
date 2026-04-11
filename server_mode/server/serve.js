@@ -112,7 +112,7 @@ const watchFileEvents = fileWatcher(clipboardFile, watchInterval);
 // Route for Server-Sent Events to watch file changes
 app.get('/sse', (req, res) => {
   const clientId = req.query.id || 'unknown';
-  log('info', `Client (id: ${clientId}), connected to /sse endpoint.`);
+  log('info', `SSE: Client connected, client id = ${clientId})`);
 
   // Send an initial heartbeat to establish the connection
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -125,7 +125,7 @@ app.get('/sse', (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeatInterval);
-    log('info', `Client (id: ${clientId}), disconnected from /sse endpoint.`);
+    log('info', `SSE | Request: Close, client id = ${clientId})`);
   });
 
   watchFileEvents(req, res);
@@ -173,7 +173,7 @@ peerServer.on('connection', (client) => {
   const peerId = client?.getId?.() || 'unknown';
 
   activePeerIds.add(peerId);
-  log('info', `Client (id: ${peerId}), peer connected. Active peers: ${activePeerIds.size}.`);
+  log('info', `Peer server: Connection, client id = ${peerId}, active peers = ${activePeerIds.size}.`);
 
   if (activePeerIds.size > 0) {
     console.log('\nActive peers:', Array.from(activePeerIds));
@@ -185,7 +185,7 @@ peerServer.on('disconnect', (client) => {
   const peerId = client?.getId?.() || 'unknown';
 
   activePeerIds.delete(peerId);
-  log('info', `Client (id: ${peerId}), peer disconnected. Active peers: ${activePeerIds.size}.`);
+  log('info', `Peer server: Disconnect, client id = ${peerId}, active peers = ${activePeerIds.size}.`);
 
   if (activePeerIds.size > 0) {
     console.log('\nActive peers:', Array.from(activePeerIds));
@@ -195,16 +195,15 @@ peerServer.on('disconnect', (client) => {
 
 peerServer.on('message', (client, message) => {
   const peerId = client?.getId?.() || 'unknown';
-  log('debug', `Client (id: ${peerId}), peer message: ${JSON.stringify(message)}`);
+  log('debug', `Peer server: Message, client id = ${peerId}, message = ${JSON.stringify(message)}`);
 });
 
 peerServer.on('error', (error) => {
-  const message = error?.message || String(error);
-  log('error', `Peer server error: ${message} `);
+  log('error', `Peer server: Error, error = ${JSON.stringify(error)} `);
 });
 
 peerServer.on('close', () => {
-  log('info', 'Peer server closed.');
+  log('info', 'Peer server: Close');
 });
 
 app.use("/signal", peerServer);
