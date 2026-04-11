@@ -135,12 +135,12 @@ async function connectSSE() {
           await clipboard.write(text);
           log('info', `SSE: Message, content received, from id = ${id_}, data timestamp = ${timestamp}), content = \`${contentReplaced}\``);
         } catch (e) {
-          log('error', `SSE: Message, error, error = ${e.message}`);
+          log('error', `SSE: Message, error, error = ${JSON.stringify(e)}`);
         }
       };
 
       es.onerror = (error) => {
-        log('info', `SSE: Error, error = ${error.message || error}.`);
+        log('info', `SSE: Error, error = ${JSON.stringify(error)}.`);
 
         clearTimeout(heartbeatTimer);
         globalThis.sseStatus = 'reconnecting';
@@ -207,7 +207,7 @@ async function connectPeer() {
         });
 
         conn.on("error", (err) => {
-          log('error', `Peer | Connection: Error, peer = ${conn.peer}, error = ${err.message || err}`);
+          log('error', `Peer | Connection: Error, peer = ${conn.peer}, error = ${JSON.stringify(err)}`);
         });
 
         conn.on("data", async (data) => {
@@ -251,8 +251,8 @@ async function connectPeer() {
         });
       });
 
-      peer.on("error", (err) => {
-        log('info', `Peer: Error, error = ${err.message}`);
+      peer.on("error", (error) => {
+        log('info', `Peer: Error, error = ${JSON.stringify(error)}`);
 
         globalThis.peerStatus = 'error';
         clearTimeout(connectTimeout);
@@ -353,7 +353,7 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on('error', (error) => {
-      log('error', `Paste SSE | Peer connection: Error, peer = ${conn.peer}, error = ${error.message || error}`);
+      log('error', `Paste SSE | Peer connection: Error, peer = ${conn.peer}, error = ${JSON.stringify(error)}`);
 
       // Send error SSE message
       res.write(`data: Connection error (id: ${fromPeerId}).\n\n`);
