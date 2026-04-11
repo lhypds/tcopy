@@ -85,7 +85,7 @@ app.use((req, res, next) => {
 });
 
 // ---- I. Connect SSE for clipboard updates from server -------------
-async function connectAndWatchEvents() {
+async function connectSSE() {
   while (true) {
     await new Promise(resolve => {
       let heartbeatTimer;
@@ -94,7 +94,7 @@ async function connectAndWatchEvents() {
       function resetHeartbeat() {
         heartbeatTimer = resetSseTimeout(heartbeatTimer, () => {
           globalThis.sseStatus = 'reconnecting';
-          log('warning', `No heartbeat received. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+          log('info', `No heartbeat received. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
           es.close();
           resolve();
         });
@@ -131,127 +131,150 @@ async function connectAndWatchEvents() {
             .replace(/ /g, '<SPACE>');
 
           await clipboard.write(text);
-          log('info', `SSE: content received(id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
+          log('info', `SSE: Content received(id: ${id_}, timestamp: ${timestamp}): \`${contentReplaced}\``);
         } catch (e) {
-          log('error', `SSE: error parsing data: ${e.message}`);
+          log('error', `SSE: Error parsing data: ${e.message}`);
         }
       };
 
-      es.onerror = () => {
+      es.onerror = (error) => {
         clearTimeout(heartbeatTimer);
         globalThis.sseStatus = 'reconnecting';
-        log('warning', `SSE: connection error. Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+        log('info', `SSE: Connection error.`);
         es.close();
         resolve();
       };
     });
 
+    log('info', `SSE: Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
     await sleep(RECONNECT_DELAY);
   }
 }
 
 log('info', `Connecting to SSE endpoint: ${sseUrl}...`);
-connectAndWatchEvents();
+connectSSE();
 
 // ---- II. PeerJS client for WebRTC connections ---------------------
-// PeerJS client for WebRTC
-log('info', `Connecting to peer signaling endpoint: ${peerSignalUrl}`);
 const url = new URL(baseUrl);
-const peer = new Peer(id, {
-  host: url.hostname,
-  port: url.port ? Number(url.port) : (url.protocol === "https:" ? 443 : 80),
-  path: "/signal",
-  secure: url.protocol === "https:",
-  wrtc,
-  config: {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-    ],
-  },
-});
+let peer;
 
-peer.on("open", () => {
-  globalThis.peerStatus = 'connected';
-  log('info', `Peer open: server = ${baseUrl}/signal`);
-});
+async function connectPeer() {
+  while (true) {
+    await new Promise(resolve => {
+      globalThis.peerStatus = 'connecting';
 
-// Data source side
-peer.on("connection", (conn) => {
-  globalThis.peerStatus = 'connection';
-  log('info', `Peer connection: incoming connection peer = ${conn.peer}.`);
-
-  conn.on("open", async () => {
-    log('info', `Peer connection | Connection open: connection peer = ${conn.peer}`);
-  });
-
-  conn.on("close", () => {
-    log('info', `Peer connection | Connection closed: connection peer = ${conn.peer}`);
-  });
-
-  conn.on("error", (err) => {
-    log('error', `Peer connection | Connection error: connection peer = ${conn.peer}, error = ${err.message || err}`);
-  });
-
-  conn.on("data", async (data) => {
-    log('info', `Peer connection | Connection data: received, connection peer = ${conn.peer}`);
-
-    // Handle file request
-    if (data && data.type === 'file_request' && data.filePath) {
-      log('info', `Peer connection | File request: filePath = ${data.filePath}`);
-
-      // Check file exist
-      const filePath = resolvePath(data.filePath);
-      if (!fs.existsSync(filePath)) {
-        log('warn', `Peer connection | File not found: filePath = ${filePath}`);
-
-        // Close connection
-        conn.close();
-        return;
-      }
-
-      // Send file
-      const fileName = path.basename(filePath);
-      const fileSize = fs.statSync(filePath).size;
-      const chunkSize = 64 * 1024; // 64KB
-      const MAX_BUFFERED_AMOUNT = 16 * chunkSize; // 1MB
-
-      // Send metadata first
-      conn.send({
-        type: 'file-meta',
-        name: fileName,
-        size: fileSize,
-        mime: 'application/octet-stream',
+      peer = new Peer(id, {
+        host: url.hostname,
+        port: url.port ? Number(url.port) : (url.protocol === "https:" ? 443 : 80),
+        path: "/signal",
+        secure: url.protocol === "https:",
+        wrtc,
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+          ],
+        },
       });
 
-      // Stream and send chunks to avoid loading the entire file into memory
-      const stream = fs.createReadStream(filePath, { highWaterMark: chunkSize });
-      for await (const chunk of stream) {
-        while (conn.dataChannel && conn.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-          await sleep(50);
+      // Timeout if the signaling server never responds (PeerJS silently hangs on unreachable servers)
+      const connectTimeout = setTimeout(() => {
+        if (globalThis.peerStatus !== 'connected') {
+          log('info', `Peer: Connection timeout.`);
+          peer.destroy();
         }
-        conn.send({ type: 'file-chunk', chunk });
-      }
+      }, RECONNECT_DELAY * 1.5);
 
-      conn.send({ type: 'file-end' });
-      log('info', `Peer connection | File sent: filePath = ${filePath}, size = ${fileSize} bytes`);
-    }
-  });
-});
+      peer.on("open", () => {
+        clearTimeout(connectTimeout);
+        globalThis.peerStatus = 'connected';
+        log('info', `Peer: open: server = ${peerSignalUrl}`);
+      });
 
-peer.on("error", (err) => {
-  globalThis.peerStatus = 'error';
-  log('error', `Peer error: server = ${baseUrl}/signal, error = ${err.message || err}`);
-});
+      // Data source side: handle incoming connections and serve file requests
+      peer.on("connection", (conn) => {
+        log('info', `Peer: Incoming connection from peer = ${conn.peer}.`);
 
-peer.on("disconnected", () => {
-  globalThis.peerStatus = 'disconnected';
-  log('info', `Peer disconnected: server = ${baseUrl}/signal`);
-});
+        conn.on("open", () => {
+          log('info', `Peer connection | Open: peer = ${conn.peer}`);
+        });
 
-peer.on("close", () => {
-  globalThis.peerStatus = 'closed';
-  log('warn', `Peer close: server = ${baseUrl}/signal`);
-});
+        conn.on("close", () => {
+          log('info', `Peer connection | Closed: peer = ${conn.peer}`);
+        });
+
+        conn.on("error", (err) => {
+          log('error', `Peer connection | Error: peer = ${conn.peer}, error = ${err.message || err}`);
+        });
+
+        conn.on("data", async (data) => {
+          log('info', `Peer connection | Data received: peer = ${conn.peer}`);
+
+          // Handle file request
+          if (data && data.type === 'file_request' && data.filePath) {
+            log('info', `Peer connection | File request: filePath = ${data.filePath}`);
+
+            const filePath = resolvePath(data.filePath);
+            if (!fs.existsSync(filePath)) {
+              log('warn', `Peer connection | File not found: filePath = ${filePath}`);
+              conn.close();
+              return;
+            }
+
+            const fileName = path.basename(filePath);
+            const fileSize = fs.statSync(filePath).size;
+            const chunkSize = 64 * 1024; // 64KB
+            const MAX_BUFFERED_AMOUNT = 16 * chunkSize; // 1MB
+
+            conn.send({
+              type: 'file-meta',
+              name: fileName,
+              size: fileSize,
+              mime: 'application/octet-stream',
+            });
+
+            // Stream chunks to avoid loading the entire file into memory
+            const stream = fs.createReadStream(filePath, { highWaterMark: chunkSize });
+            for await (const chunk of stream) {
+              while (conn.dataChannel && conn.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+                await sleep(50);
+              }
+              conn.send({ type: 'file-chunk', chunk });
+            }
+
+            conn.send({ type: 'file-end' });
+            log('info', `Peer connection | File sent: filePath = ${filePath}, size = ${fileSize} bytes`);
+          }
+        });
+      });
+
+      peer.on("error", (err) => {
+        globalThis.peerStatus = 'error';
+        clearTimeout(connectTimeout);
+        log('warning', `Peer: Error: server = ${peerSignalUrl}, error = ${err.message || err}`);
+        // Destroy triggers 'close', which resolves and falls into the reconnect loop
+        peer.destroy();
+      });
+
+      peer.on("disconnected", () => {
+        globalThis.peerStatus = 'reconnecting';
+        log('info', `Peer: Disconnected from signaling server.`);
+      });
+
+      peer.on("close", () => {
+        globalThis.peerStatus = 'closed';
+        clearTimeout(connectTimeout);
+        log('info', `Peer: Closed.`);
+        resolve();
+      });
+    });
+
+    log('info', `Peer: Reconnecting (${RECONNECT_DELAY / 1000}s)...`);
+    await sleep(RECONNECT_DELAY);
+  }
+}
+
+log('info', `Connecting to peer signaling endpoint: ${peerSignalUrl}...`);
+connectPeer();
 
 // Paste SSE: Local SSE route for accepting paste events and triggering PeerJS file transfer
 app.get('/filepaste', async (req, res) => {
@@ -259,27 +282,27 @@ app.get('/filepaste', async (req, res) => {
   const { fromPeerId, filePath, pasteTo } = req.query || {};
 
   // Log the paste request
-  log('info', `Paste SSE: received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
+  log('info', `Paste SSE: Received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
 
   if (!fromPeerId) {
-    log('warn', 'Paste SSE: request missing fromPeerId.');
+    log('warn', 'Paste SSE: Request missing fromPeerId.');
     return res.status(400).json({ success: false, error: 'fromPeerId is required' });
   }
 
   if (!filePath) {
-    log('warn', 'Paste SSE: request missing filePath.');
+    log('warn', 'Paste SSE: Request missing filePath.');
     return res.status(400).json({ success: false, error: 'filePath is required' });
   }
 
   if (!pasteTo) {
-    log('warn', 'Paste SSE: request missing pasteTo.');
+    log('warn', 'Paste SSE: Request missing pasteTo.');
     return res.status(400).json({ success: false, error: 'pasteTo is required' });
   }
 
   // Check paste to path exists
   const pasteTo_ = resolvePath(pasteTo);
   if (!fs.existsSync(pasteTo_) || !fs.statSync(pasteTo_).isDirectory()) {
-    log('warn', `Paste SSE: request pasteTo path does not exist or is not a directory: pasteTo = ${pasteTo_}`);
+    log('warn', `Paste SSE: Request pasteTo path does not exist or is not a directory: pasteTo = ${pasteTo_}`);
     return res.status(400).json({ success: false, error: 'pasteTo path does not exist or is not a directory' });
   }
 
