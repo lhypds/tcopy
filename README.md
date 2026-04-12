@@ -18,7 +18,7 @@ Use server to manage shared text and API to get or update shared text.
 2 machines must both have access to the server.  
 
 Storage mode:  
-Use shared storage between two computers.  
+Use a shared storage between two computers.  
 2 computers must both have access to the shared storage.  
 
 
@@ -60,17 +60,17 @@ Commands
 Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]  
 
 `tcopy <text>` or `tcopy copy <text>`  
-Copy the specified text to the clipboard and send it to the server or shared storage clipboard text file.  
+Copy the specified text to the clipboard and send it to the server or storage's clipboard text file.  
 
 `tcopy -f <file_path>` or `tcopy copy -f <file_path>`  
 For server mode, it will copy the file path to the server's clipboard file.  
 For storage, it will copy the file to the shared storage, and copy the file path to the shared storage's clipboard file.  
 
 `tcopy paste`  
-Get the current text from the server/shared storage and copy it to the local clipboard.  
+Get the current text from the server/storage and copy it to the local clipboard.  
 
 `tcopy paste -f <target_path>`  
-Get the file from the server/shared storage and save it to the specified file path.  
+Get the file from the server/storage and save it to the specified file path.  
 
 
 Clipboard
@@ -79,21 +79,21 @@ Clipboard
 `.clipboard` file is a plain text file.  
 
 Basically it is the content of the clipboard text.  
-If there is an source ID, the text will starts with `###ID=source_id###`.
+If there is an source ID, the content will starts with `###ID=source_id###`.  
 
 If things copied is a file.  
 It will be `###ID=source_id###` followed by the file path.  
 File path format: `+file[file_path]`  
+
 Example:  
-`###ID=123###+file[~/Desktop/a.txt]`  
+`###ID=1775993192###+file[~/Desktop/a.txt]`  
 
 
 Setup
 -----
 
-Requirements
-Python3  
-Node.js (for server mode)  
+Requirements:
+Python3 (file storage mode), Node.js (for server mode)  
 
 1. Setup `tcopy`
 
@@ -112,20 +112,3 @@ Trigger a "Execute Shell Script" to execute `tcopy`.
 
 * Linux  
 Use system settings to set up a custom shortcut to execute `tcopy`.  
-
-
-Development
------------
-
-Server APIs  
-
-GET `/sse`  
-Create a Server-Sent Events (SSE) stream connection between the server and the client.  
-Client can listen to the stream and update the content in real time.  
-
-GET `/`  
-Server simply read the `.clipboard` and send the content as response.  
-
-POST `/`  
-The client will send the content in request body to the server.  
-The server will save the content to the `.clipboard`.  

@@ -23,19 +23,19 @@ _read_env_value() {
 
 _choose_mode() {
 	while true; do
-		printf "Choose MODE ([s]erver/[f]ile): "
+		printf "Choose MODE ([s]erver/s[t]orage): "
 		read -r answer
 		case "${answer}" in
 			s|S|server|SERVER)
 				mode="server"
 				break
 				;;
-			f|F|file|FILE)
-				mode="file"
+			t|T|storage|STORAGE)
+				mode="storage"
 				break
 				;;
 			*)
-				echo "Invalid MODE. Please choose 'server' or 'file'."
+				echo "Invalid MODE. Please choose 'server' or 'storage'."
 				;;
 		esac
 	done
@@ -144,15 +144,12 @@ readEnv() {
 		else
 			server_base_url=""
 		fi
-	elif [[ "$mode" == "file" ]]; then
-		environment="file"
-		server_base_url=""
-	else
+	elif [[ "$mode" == "storage" ]]; then
 		environment=""
 		server_base_url=""
 	fi
 
-	if [[ "$mode" != "file" && "$mode" != "server" ]]; then
+	if [[ "$mode" != "storage" && "$mode" != "server" ]]; then
 		_choose_mode
 	fi
 
@@ -162,8 +159,8 @@ readEnv() {
 resolveTargetDir() {
 	local target_dir=""
 
-	if [[ "$mode" == "file" ]]; then
-		target_dir="$SCRIPT_DIR/file_mode"
+	if [[ "$mode" == "storage" ]]; then
+		target_dir="$SCRIPT_DIR/storage_mode"
 	elif [[ "$mode" == "server" ]]; then
 		target_dir="$SCRIPT_DIR/server_mode"
 	fi
