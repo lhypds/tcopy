@@ -6,5 +6,5 @@ if [ -z "$1" ]; then
 fi
 
 ID="$(cat id 2>/dev/null || echo "")"
-echo -n "###ID=${ID}###$1" > clipboard.txt
-echo "Text written to clipboard.txt: $1"
+echo -n "###ID=${ID}###$1" > .clipboard
+echo "Text written to .clipboard: $1"

@@ -50,11 +50,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    clipboard_file_path = os.getenv("CLIPBOARD_FILE_PATH")
+    storage_path = os.getenv("STORAGE_PATH")
+    clipboard_file = os.getenv("CLIPBOARD_FILE")
+    clipboard_file_path = os.path.join(storage_path, clipboard_file)
     line_ending_saving = os.getenv("LINE_ENDING_SAVING", "CRLF")
 
     if clipboard_file_path is None:
-        print("Error: CLIPBOARD_FILE_PATH not found in .env file")
+        print("Error: clipboard path setup failed.")
     else:
         content = " ".join(args.content).strip() if args.content else None
         write_content_to_file(clipboard_file_path, line_ending_saving, content)

@@ -15,10 +15,12 @@ def read_file_to_clipboard(file_path):
 
 
 if __name__ == "__main__":
-    clipboard_file_path = os.getenv("CLIPBOARD_FILE_PATH")
+    storage_path = os.getenv("STORAGE_PATH")
+    clipboard_file = os.getenv("CLIPBOARD_FILE")
+    clipboard_file_path = os.path.join(storage_path, clipboard_file)
 
     if clipboard_file_path is None:
-        print("Error: CLIPBOARD_FILE_PATH not found in .env file")
+        print("Error: CLIPBOARD_FILE not found in .env file")
     elif not os.path.exists(clipboard_file_path):
         print(f"Error: File not found: {clipboard_file_path}")
     else:

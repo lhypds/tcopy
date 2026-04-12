@@ -13,8 +13,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# Convert the CLIPBOARD_FILE_PATH to an absolute path if it's not already
-clipboard_file_path = os.path.abspath(os.getenv("CLIPBOARD_FILE_PATH", ""))
+# Convert the CLIPBOARD_FILE to an absolute path if it's not already
+storage_path = os.getenv("STORAGE_PATH", "")
+clipboard_file = os.getenv("CLIPBOARD_FILE", "")
+clipboard_file_path = os.path.abspath(os.path.join(storage_path, clipboard_file))
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

@@ -88,7 +88,7 @@ It connect to server's PeerJS signaling endpoint.
 Example:  
 `copy.sh "+file[~/Desktop/a.txt]"`
 
-5. Server will write it to `clipboard.txt`.  
+5. Server will write it to `.clipboard`.  
 Example:  
 `###ID=1111111###+file[~/Desktop/a.txt]`
 It will broadcast the update to client A and client B through SSE.  

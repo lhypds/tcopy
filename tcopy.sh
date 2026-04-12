@@ -10,20 +10,6 @@ environment=""
 server_base_url=""
 command="${1:-}"
 
-printUsage() {
-	echo "Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|status|-v|--version|-h|--help]"
-}
-
-if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
-	echo "$(cat "$SCRIPT_DIR/VERSION")"
-	exit 0
-fi
-
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-	printUsage
-	exit 0
-fi
-
 _read_env_value() {
 	local key="$1"
 	local file="$2"
@@ -239,6 +225,14 @@ printUsage() {
 }
 
 case "$command" in
+	copy|"")
+		readEnv
+		runCommandScript "copy" "${@:2}"
+		;;
+	paste)
+		readEnv
+		runCommandScript "paste" "${@:2}"
+		;;
 	install)
 		runRootScript "install"
 		;;
@@ -253,11 +247,9 @@ case "$command" in
 		readEnv
 		runCommandScript "setup"
 		;;
-	info)
-		readEnv "nochoose"
-		showInfo
-		;;
 	start)
+	    # For server mode, it will start the server or client process
+		# Or for storage, it will start the file watcher process
 		readEnv
 		runCommandScript "start"
 		;;
@@ -269,13 +261,15 @@ case "$command" in
 		readEnv
 		runCommandScript "restart"
 		;;
-    copy|"")
-		readEnv
-		runCommandScript "copy" "${@:2}"
-    	;;
-	paste)
-	    readEnv
-		runCommandScript "paste" "${@:2}"
+	info)
+		readEnv "nochoose"
+		showInfo
+		;;
+	-v|--version)
+		echo "$(cat "$SCRIPT_DIR/VERSION")"
+		;;
+	-h|--help)
+		printUsage
 		;;
 	*)
 		readEnv

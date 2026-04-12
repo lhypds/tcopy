@@ -11,7 +11,7 @@ rm server/server.log
 rm client/id
 rm server/id
 
-# clipboard.txt
-rm server/clipboard.txt
+# .clipboard
+rm server/.clipboard
 
 echo "Cleared."

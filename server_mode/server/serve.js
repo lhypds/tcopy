@@ -16,7 +16,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const log = createLogger('server.log');
 
 const port = process.env.PORT || 5460;
-const clipboardFile = 'clipboard.txt';
+const clipboardFile = '.clipboard';
 const watchInterval = 300;
 
 // Express server
