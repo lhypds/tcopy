@@ -49,7 +49,7 @@ On machine B
 Client automatically receive the text and update clipboard.  
 Use `Ctrl + V` to paste the text on machine B.  
 
-* For storage  
+* For storage mode  
 Both machine should setup to use the same shared storage path.  
 
 
