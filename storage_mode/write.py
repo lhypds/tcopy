@@ -8,10 +8,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+storage_path = os.getenv("STORAGE_PATH")
+clipboard_file = os.getenv("CLIPBOARD_FILE")
+clipboard_file_path = os.path.join(storage_path, clipboard_file)
+line_ending_saving = os.getenv("LINE_ENDING_SAVING", "CRLF")
+
+
 # If content is None, read from clipboard. Otherwise, use the provided content.
-def write_content_to_file(file_path, line_ending_saving="CRLF", content=None):
+def write_content_to_clipboard(content=None):
     if content is None:
         content = pyperclip.paste()
+
+    file_path = clipboard_file_path
 
     content_replaced = (
         content.replace("\n", "<LF>")
@@ -39,24 +47,3 @@ def write_content_to_file(file_path, line_ending_saving="CRLF", content=None):
     with open(file_path, "w", encoding="utf-8", newline="") as file:
         file.write(content)
         print(f"Content written to {file_path}")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Write text to tcopy file store")
-    parser.add_argument(
-        "content",
-        nargs="*",
-        help="Text content to write. If omitted, clipboard content is used.",
-    )
-    args = parser.parse_args()
-
-    storage_path = os.getenv("STORAGE_PATH")
-    clipboard_file = os.getenv("CLIPBOARD_FILE")
-    clipboard_file_path = os.path.join(storage_path, clipboard_file)
-    line_ending_saving = os.getenv("LINE_ENDING_SAVING", "CRLF")
-
-    if clipboard_file_path is None:
-        print("Error: clipboard path setup failed.")
-    else:
-        content = " ".join(args.content).strip() if args.content else None
-        write_content_to_file(clipboard_file_path, line_ending_saving, content)
