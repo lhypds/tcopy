@@ -21,34 +21,23 @@ def get_clipboard_content():
         return f.read().strip()
 
 
-def paste_file_from_storage(target_path):
-    """Move the stored file to target_path (file or directory)."""
-    if not os.path.isdir(storage_path):
-        print(f"Error: Storage path not found: {storage_path}")
+def paste_file_from_storage(file_ref, target_path):
+    """Move the file referenced in clipboard (+file[...]) from storage to target_path."""
+    filename = os.path.basename(os.path.expanduser(file_ref))
+    source = os.path.join(storage_path, filename)
+
+    if not os.path.isfile(source):
+        print(f"Error: File not found in storage: '{source}'")
         return
 
-    moved = 0
-    for filename in os.listdir(storage_path):
-        if filename in EXCLUDE_FILES:
-            continue
-        source = os.path.join(storage_path, filename)
-        if not os.path.isfile(source):
-            continue
-
-        if os.path.isdir(target_path):
-            destination = os.path.join(target_path, filename)
-        else:
-            os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
-            destination = target_path
-
-        shutil.move(source, destination)
-        print(f"Moved '{source}' to '{destination}'")
-        moved += 1
-
-    if moved == 0:
-        print("No files to paste.")
+    if os.path.isdir(target_path):
+        destination = os.path.join(target_path, filename)
     else:
-        print(f"Pasted {moved} file(s) to '{target_path}'")
+        os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+        destination = target_path
+
+    shutil.move(source, destination)
+    print(f"Moved '{source}' to '{destination}'")
 
 
 if __name__ == "__main__":
@@ -82,7 +71,8 @@ if __name__ == "__main__":
             print("Error: Clipboard does not contain a file reference.")
             exit(1)
         target = os.path.expanduser(args.file)
-        paste_file_from_storage(target)
+        file_ref = content[len("+file[") : -1]
+        paste_file_from_storage(file_ref, target)
     else:
         # No -f: paste text to system clipboard
         if is_file_ref:
