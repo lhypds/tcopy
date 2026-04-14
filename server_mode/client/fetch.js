@@ -30,23 +30,39 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
 
   return await new Promise((resolve) => {
     const es = new EventSource(`${sseFilePasteUrl}?${params.toString()}`);
-    const timeout = setTimeout(() => {
+    let timeout = setTimeout(() => {
       es.close();
       resolve(false);
     }, 15000);
 
     es.onmessage = (event) => {
-      if (event.data?.trim()) {
-        console.log('SSE:', event.data.trim());
+      const msg = event.data?.trim();
+      if (msg) {
+        console.log('SSE:', msg);
       }
+
+      // Reset the overall timeout on each incoming message
       clearTimeout(timeout);
-      es.close();
-      resolve(true);
+      timeout = setTimeout(() => {
+        es.close();
+        resolve(false);
+      }, 15000);
+
+      // Only close once we receive a terminal event
+      if (
+        msg.startsWith('File saved:') ||
+        msg.startsWith('Connection closed') ||
+        msg.startsWith('Connection error') ||
+        msg.startsWith('Error')
+      ) {
+        clearTimeout(timeout);
+        es.close();
+        resolve(msg.startsWith('File saved:'));
+      }
     };
 
     es.addEventListener('heartbeat', (e) => {
       console.log(`SSE: Heartbeat (server: ${baseUrl}, data: ${e.data})`);
-      resetHeartbeat();
     });
 
     es.onerror = () => {
