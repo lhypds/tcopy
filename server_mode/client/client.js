@@ -190,7 +190,7 @@ async function connectPeer() {
 
       // Data source side: handle incoming connections and serve file requests
       peer.on("connection", (conn) => {
-        log('info', `Peer: Incoming connection from peer = ${conn.peer}.`);
+        log('info', `Peer| Connection: Incoming connection from peer = ${conn.peer}.`);
 
         conn.on("open", () => {
           log('info', `Peer | Connection: Open, peer = ${conn.peer}`);
