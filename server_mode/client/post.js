@@ -29,16 +29,10 @@ export async function postContent(content) {
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const contentReplaced = content
-      .replace(/\n/g, '<LF>')
-      .replace(/\r/g, '<CR>')
-      .replace(/\t/g, '<TAB>')
-      .replace(/ /g, '<SPACE>');
-
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, text: contentReplaced, timestamp }),
+      body: JSON.stringify({ id, text: content, timestamp }),
       signal: controller.signal,
     });
     clearTimeout(timer);
