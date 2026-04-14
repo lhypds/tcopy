@@ -24,7 +24,7 @@ Machine A copies text, it will be sent to the server, and then sent to Machine B
 
 For files  
 Machine A copies a file, it will be send as file reference to server.  
-On Machine B, if use `paste` command, it will start transfering file from Machine A to Machine B.  
+On Machine B, if use `paste` command, it will start transfering the referenced file from Machine A to Machine B.  
 
 Setup  
 On server, machine A and B, clone code and run `./tcopy.sh setup`.  
