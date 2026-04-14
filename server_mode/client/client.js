@@ -120,6 +120,11 @@ async function connectSSE() {
             return;
           }
 
+          if (text.startsWith('+file[') && text.endsWith(']')) {
+            log('info', `SSE: Message, file reference received, from id = ${id_}, data timestamp = ${timestamp}), file reference = ${text}`);
+            return;
+          }
+
           const contentReplaced = text
             .replace(/\n/g, '<LF>')
             .replace(/\r/g, '<CR>')
