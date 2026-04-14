@@ -3,54 +3,37 @@ tcopy
 =====
 
 
-`tcopy` is for copying text between two computers in real time.  
-Originally for only copying text, but I've added copying files feature.  
+`tcopy` is originally for only copying text, so I called it `tcopy`, also it can copy files.  
+
+Support macOS, Windows and Linux.  
+So, if the P2P not blocked by your NAT, basically it can copy any file from any machine to any machine.  
+
+In my test, the file transfer speed can reach 65MB/s.  
 
 
-How It Works
-------------
+Two Modes
+---------
 
-When the text is updated on one machine, it will be immediately reflected on the other machine.  
-It supports both server mode and storage, allowing users to choose the most suitable method for their needs.  
+* Server Mode  
 
-Server mode:  
-Use server to manage shared text and API to get or update shared text.  
-2 machines must both have access to the server.  
+A server. Machine A and Machine B.  
 
-Storage mode:  
-Use a shared storage between two computers.  
-2 computers must both have access to the shared storage.  
+For text:  
+Machine A copies text, it will be sent to the server, and then sent to Machine B.  
 
+For files:  
+Machine A copies a file, it will be send as file reference to server.  
+On Machine B, if use `paste` command, it will start transfering file from Machine A to Machine B.  
 
-Quick Start
------------
+* Storage Mode  
 
-* For server mode  
-For example, user want to copy from machine A to machine B through a server.
+A shared file storage. Machine A and Machine B.  
 
-On server  
-Clone the repository and run `./tcopy.sh install` to install the command.    
-Run `tcopy setup` and choose `server` mode, then choose `server` environment.  
-Then start the server with `tcopy start`.  
+For text:  
+Machine A copies text, it will be sent to the shared storage `.clipboard`, on Machine B if user started a watcher, it will get the text from the shared storage and copy it to local clipboard.  
 
-On both machine A and machine B  
-Clone the repository and run `./tcopy.sh install` to install the command.  
-Run `tcopy setup` and choose `server` mode, then choose `client` environment.  
-Then start the client with `tcopy start`.  
-
-On machine A  
-Copy current clipboard  
-`tcopy`  
-Or copy any text  
-`tcopy "abc"`  
-`tcopy` will send text to server.  
-
-On machine B
-Client automatically receive the text and update clipboard.  
-Use `Ctrl + V` to paste the text on machine B.  
-
-* For storage mode  
-Both machine should setup to use the same shared storage path.  
+For files:  
+Machine A copies a file, it will be copied to the shared storage. And on Machine B, if use `paste` command, it will copy from the file storage.  
 
 
 Commands
@@ -64,20 +47,27 @@ Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|
 `tcopy`  
 Copy the current clipboard text to the server or storage's clipboard.  
 
+Text copy
 `tcopy <text>` or `tcopy copy <text>`  
 Copy the specified text to the clipboard and send it to the server or storage's clipboard.  
 
+File copy
 `tcopy -f <file_path>` or `tcopy copy -f <file_path>`  
 For server mode, it will copy the file path to the server's clipboard file.  
 For storage mode, it will copy the file to the shared storage, and copy the file path to the shared storage's clipboard file.  
 
 * Paste  
 
+Text paste
 `tcopy paste`  
 Get the current text from the server/storage and copy it to the local clipboard.  
 
+File paste
+`tcopy paste -f`  
+Transfer file from server/storage to current directory.  
+
 `tcopy paste -f <target_path>`  
-Get the file from the server/storage and save it to the specified file path.  
+Transfer file from server/storage to target path.  
 
 
 Clipboard
@@ -87,6 +77,9 @@ Clipboard
 
 Basically it is the content of the clipboard text.  
 If there is an source ID, the content will starts with `###ID=source_id###`.  
+
+Example:  
+`###ID=1775993192###Hello World`  
 
 If things copied is a file.  
 It will be `###ID=source_id###` followed by the file path.  
@@ -104,8 +97,10 @@ Python3 (file storage mode), Node.js (for server mode)
 
 1. Setup `tcopy`
 
-Use `tcopy install` to install as a commmand.  
 Use `tcopy setup`, select the mode and environment, setup will be done automatically.  
+
+(Optional)  
+Use `tcopy install` to install as a commmand.  
 
 2. Shortcut Setup
 
