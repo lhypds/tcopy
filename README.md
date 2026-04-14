@@ -16,24 +16,45 @@ Two Modes
 
 * Server Mode  
 
-A server. Machine A and Machine B.  
+A server.  
+Machine A and Machine B.  
 
-For text:  
+For text  
 Machine A copies text, it will be sent to the server, and then sent to Machine B.  
 
-For files:  
+For files  
 Machine A copies a file, it will be send as file reference to server.  
 On Machine B, if use `paste` command, it will start transfering file from Machine A to Machine B.  
 
+Setup  
+On server, machine A and B, clone code and run `./tcopy.sh setup`.  
+Select server mode, and select environment.  
+Setup `.env` file in `server_mode` folder.  
+
+Start  
+On server, run `tcopy start` to start the server.  
+On machine A and B, run `tcopy start` to start the client.  
+Make sure the SSE and Peer both connected to the server.  
+
 * Storage Mode  
 
-A shared file storage. Machine A and Machine B.  
+A shared file storage.  
+Machine A and Machine B.  
 
 For text:  
 Machine A copies text, it will be sent to the shared storage `.clipboard`, on Machine B if user started a watcher, it will get the text from the shared storage and copy it to local clipboard.  
 
 For files:  
 Machine A copies a file, it will be copied to the shared storage. And on Machine B, if use `paste` command, it will copy from the file storage.  
+
+Setup:  
+On machine A and B, clone code and run `./tcopy.sh setup`. 
+Select storage mode. For storage path, you can select a local folder, or a network share folder.
+Setup `.env` file in `storage_mode` folder.  
+
+Watcher:
+In storage mode, you can start a watcher to automatically get the clipboard content from the shared storage.  
+Use `tcopy start` to start the watcher, and use `tcopy stop` to stop it.  
 
 
 Commands
