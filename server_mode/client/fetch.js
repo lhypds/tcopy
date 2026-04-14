@@ -26,6 +26,8 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
     saveTo: String(saveTo ?? ''),
   });
 
+  console.log(`Triggering peer transfer...`);
+
   return await new Promise((resolve) => {
     const es = new EventSource(`${sseFilePasteUrl}?${params.toString()}`);
     const timeout = setTimeout(() => {
