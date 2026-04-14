@@ -26,4 +26,4 @@ echo "Installing Python packages in .venv from requirements.txt..."
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
 
-echo "File mode setup completed."
+echo "File mode setup completed, activate the virtual environment with: \`source .venv/bin/activate\`"

@@ -7,21 +7,8 @@ ENV_FILE="$SCRIPT_DIR/.env"
 
 mode=""
 environment=""
+server_base_url=""
 command="${1:-}"
-
-printUsage() {
-	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|status|-v|--version|-h|--help]"
-}
-
-if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
-	echo "$(cat "$SCRIPT_DIR/VERSION")"
-	exit 0
-fi
-
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-	printUsage
-	exit 0
-fi
 
 _read_env_value() {
 	local key="$1"
@@ -36,39 +23,19 @@ _read_env_value() {
 
 _choose_mode() {
 	while true; do
-		printf "Choose MODE ([s]erver/[f]ile): "
+		printf "Choose MODE ([s]erver/s[t]orage): "
 		read -r answer
 		case "${answer}" in
 			s|S|server|SERVER)
 				mode="server"
 				break
 				;;
-			f|F|file|FILE)
-				mode="file"
+			t|T|storage|STORAGE)
+				mode="storage"
 				break
 				;;
 			*)
-				echo "Invalid MODE. Please choose 'server' or 'file'."
-				;;
-		esac
-	done
-}
-
-_choose_environment_for_server() {
-	while true; do
-		printf "Choose ENVIRONMENT for server mode ([s]erver/[c]lient): "
-		read -r answer
-		case "${answer}" in
-			s|S|server|SERVER)
-				environment="server"
-				break
-				;;
-			c|C|client|CLIENT)
-				environment="client"
-				break
-				;;
-			*)
-				echo "Invalid ENVIRONMENT. Please choose 'server' or 'client'."
+				echo "Invalid MODE. Please choose 'server' or 'storage'."
 				;;
 		esac
 	done
@@ -103,8 +70,27 @@ writeEnv() {
 			}
 		}
 	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
+}
 
-	awk -v k="ENVIRONMENT" -v v="$environment" '
+resetEnv() {
+	mode=""
+	environment=""
+	server_base_url=""
+
+	local tmp_file
+	local server_env_file="$SCRIPT_DIR/server_mode/.env"
+
+	# Reset MODE in .env
+	if [ ! -f "$ENV_FILE" ]; then
+		if [ -f "$SCRIPT_DIR/.env.example" ]; then
+			cp "$SCRIPT_DIR/.env.example" "$ENV_FILE"
+		else
+			touch "$ENV_FILE"
+		fi
+	fi
+
+	tmp_file="${ENV_FILE}.tmp"
+	awk -v k="MODE" -v v="" '
 		BEGIN { updated = 0 }
 		$0 ~ "^[[:space:]]*" k "=" {
 			if (!updated) {
@@ -120,36 +106,51 @@ writeEnv() {
 			}
 		}
 	' "$ENV_FILE" > "$tmp_file" && mv "$tmp_file" "$ENV_FILE"
+
+	# Reset ENVIRONMENT in server_mode/.env
+	if [ ! -f "$server_env_file" ]; then
+		if [ -f "$SCRIPT_DIR/server_mode/.env.example" ]; then
+			cp "$SCRIPT_DIR/server_mode/.env.example" "$server_env_file"
+		else
+			touch "$server_env_file"
+		fi
+	fi
+
+	tmp_file="${server_env_file}.tmp"
+	awk -v k="ENVIRONMENT" -v v="" '
+		BEGIN { updated = 0 }
+		$0 ~ "^[[:space:]]*" k "=" {
+			if (!updated) {
+				print k "=" v
+				updated = 1
+			}
+			next
+		}
+		{ print }
+		END {
+			if (!updated) {
+				print k "=" v
+			}
+		}
+	' "$server_env_file" > "$tmp_file" && mv "$tmp_file" "$server_env_file"
 }
 
 readEnv() {
-	local mode_option="${1:-}"
-
-	if [[ "$mode_option" == "reset" ]]; then
-		mode=""
+	mode="$(_read_env_value "MODE" "$ENV_FILE")"
+	if [[ "$mode" == "server" ]]; then
+		environment="$(_read_env_value "ENVIRONMENT" "$SCRIPT_DIR/server_mode/.env")"
+		if [[ "$environment" == "client" ]]; then
+			server_base_url="$(_read_env_value "SERVER_BASE_URL" "$SCRIPT_DIR/server_mode/.env")"
+		else
+			server_base_url=""
+		fi
+	elif [[ "$mode" == "storage" ]]; then
 		environment=""
-	else
-		mode="$(_read_env_value "MODE" "$ENV_FILE")"
-		environment="$(_read_env_value "ENVIRONMENT" "$ENV_FILE")"
+		server_base_url=""
 	fi
 
-	if [[ "$mode_option" == "nochoose" ]]; then
-		if [[ "$mode" == "file" ]]; then
-			environment="file"
-		fi
-		return 0
-	fi
-
-	if [[ "$mode" != "file" && "$mode" != "server" ]]; then
+	if [[ "$mode" != "storage" && "$mode" != "server" ]]; then
 		_choose_mode
-	fi
-
-	if [[ "$mode" == "file" ]]; then
-		environment="file"
-	else
-		if [[ "$environment" != "server" && "$environment" != "client" ]]; then
-			_choose_environment_for_server
-		fi
 	fi
 
 	writeEnv
@@ -158,19 +159,10 @@ readEnv() {
 resolveTargetDir() {
 	local target_dir=""
 
-	if [[ "$mode" == "file" ]]; then
-		target_dir="$SCRIPT_DIR/file_mode"
+	if [[ "$mode" == "storage" ]]; then
+		target_dir="$SCRIPT_DIR/storage_mode"
 	elif [[ "$mode" == "server" ]]; then
-		if [[ "$environment" == "server" ]]; then
-			target_dir="$SCRIPT_DIR/server_mode/server"
-		else
-			target_dir="$SCRIPT_DIR/server_mode/client"
-		fi
-	fi
-
-	if [ -z "$target_dir" ] || [ ! -d "$target_dir" ]; then
-		echo "Error: target directory not found for MODE=$mode ENVIRONMENT=$environment"
-		exit 1
+		target_dir="$SCRIPT_DIR/server_mode"
 	fi
 
 	echo "$target_dir"
@@ -214,18 +206,30 @@ runUpdate() {
 }
 
 showInfo() {
-	echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
-  echo "Current mode: $mode"
-  if [[ "$mode" == "server" ]]; then
-    echo "Current envrionment: $environment"
+    echo "tcopy $(cat "$SCRIPT_DIR/VERSION")"
+    echo "Current mode: $mode"
+	
+    if [[ "$mode" == "server" ]]; then
+	    echo "Current environment: $environment"
+	if [[ "$environment" == "client" && -n "$server_base_url" ]]; then
+		echo "Server base URL: $server_base_url"
+	fi
   fi
 }
 
 printUsage() {
-	echo "Usage: tcopy [install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
+	echo "Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
 }
 
 case "$command" in
+	copy|"")
+		readEnv
+		runCommandScript "copy" "${@:2}"
+		;;
+	paste)
+		readEnv
+		runCommandScript "paste" "${@:2}"
+		;;
 	install)
 		runRootScript "install"
 		;;
@@ -236,14 +240,13 @@ case "$command" in
 		runUpdate
 		;;
 	setup)
-		readEnv "reset"
-		runRootScript "setup" "$(resolveTargetDir)"
-		;;
-	info)
-		readEnv "nochoose"
-		showInfo
+		resetEnv
+		readEnv
+		runCommandScript "setup"
 		;;
 	start)
+	    # For server mode, it will start the server or client process
+		# Or for storage, it will start the file watcher process
 		readEnv
 		runCommandScript "start"
 		;;
@@ -255,10 +258,16 @@ case "$command" in
 		readEnv
 		runCommandScript "restart"
 		;;
-  "")
-		readEnv
-		runCommandScript "copy"
-    ;;
+	info)
+		readEnv "nochoose"
+		showInfo
+		;;
+	-v|--version)
+		echo "$(cat "$SCRIPT_DIR/VERSION")"
+		;;
+	-h|--help)
+		printUsage
+		;;
 	*)
 		readEnv
 		runCommandScript "copy" "$@"

@@ -4,4 +4,4 @@ bash setup.sh
 bash stop.sh
 bash start.sh
 
-echo "Client restarted."
+echo "Restarted."
