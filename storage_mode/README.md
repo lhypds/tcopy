@@ -17,7 +17,7 @@ Write the <text> to the storage's clipboard file.
 `copy.py <text>`  
 
 Copy the file at <file_path> to the storage and write a reference to it in the clipboard file.  
-`copy.py -f <file_path>`  
+`copy.py [-f|--file] <file_path>`  
 Clipboard text example:  
 `+file[~/Documents/report.pdf]`  
 
@@ -26,8 +26,11 @@ Clipboard text example:
 Read the clipboard file and paste to local clipboard.  
 `paste.py`  
 
+paste the referenced file to current directory.  
+`paste.py [-f|--file]`  
+
 Read the clipboard file and paste the referenced file to <target_path>.  
-`paste.py -f <target_path>`
+`paste.py [-f|--file] <target_path>`
 
 
 Watcher

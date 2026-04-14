@@ -293,19 +293,19 @@ connectPeer();
 // Paste SSE: Local SSE route for accepting paste events and triggering PeerJS file transfer
 app.get('/filepaste', async (req, res) => {
   // Get paste parameters from query string
-  const { fromPeerId, filePath, pasteTo } = req.query || {};
+  const { fromPeerId, fromPath, pasteTo } = req.query || {};
 
   // Log the paste request
-  log('info', `Paste SSE: Received paste SSE request: ${JSON.stringify({ fromPeerId, filePath, pasteTo })}`);
+  log('info', `Paste SSE: Received paste SSE request: ${JSON.stringify({ fromPeerId, fromPath, pasteTo })}`);
 
   if (!fromPeerId) {
     log('warn', 'Paste SSE: Request missing fromPeerId.');
     return res.status(400).json({ success: false, error: 'fromPeerId is required' });
   }
 
-  if (!filePath) {
-    log('warn', 'Paste SSE: Request missing filePath.');
-    return res.status(400).json({ success: false, error: 'filePath is required' });
+  if (!fromPath) {
+    log('warn', 'Paste SSE: Request missing fromPath.');
+    return res.status(400).json({ success: false, error: 'fromPath is required' });
   }
 
   if (!pasteTo) {
@@ -346,8 +346,8 @@ app.get('/filepaste', async (req, res) => {
       // Send success SSE message
       res.write(`data: Connected to peer (id: ${conn.peer})\n\n`);
 
-      // Send filePath for verification
-      conn.send({ type: 'file_request', filePath });
+      // Send fromPath for verification
+      conn.send({ type: 'file_request', filePath: fromPath });
     });
 
     conn.on("close", () => {
@@ -405,7 +405,7 @@ app.get('/filepaste', async (req, res) => {
             name: fileMeta.name,
             copyFrom: {
               peerId: fromPeerId,
-              path: filePath,
+              path: fromPath,
             },
             pasteTo: {
               peerId: id,

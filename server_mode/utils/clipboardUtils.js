@@ -1,36 +1,12 @@
 import clipboard from 'clipboardy';
 
-export async function writeClipboard(content) {
+export async function writeSystemClipboard(content) {
   await clipboard.write(content);
 }
 
-export async function readClipboard() {
+export async function readSystemClipboard() {
   const clipboardContent = await clipboard.read();
   return clipboardContent;
-}
-
-export async function fetchRemoteClipboard(url) {
-  try {
-    console.log(`Fetching content from \`${url}\`.`);
-    const response = await fetch(url);
-    if (!response.ok) {
-      return {
-        success: false,
-        error: `HTTP ${response.status} ${response.statusText}`,
-      };
-    }
-
-    const content = await response.text();
-    return {
-      success: true,
-      content: content,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
 }
 
 export function readPlainTextClipboard(content) {

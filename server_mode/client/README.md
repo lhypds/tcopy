@@ -26,7 +26,7 @@ Write the <text> to the server's clipboard file.
 `copy.js <text>`  
 
 Write a reference to server's clipboard file.  
-`copy.js -f <file_path>`  
+`copy.js [-f|--file] <file_path>`  
 Clipboard text example:  
 `+file[~/Documents/report.pdf]`  
 
@@ -35,8 +35,11 @@ Clipboard text example:
 Read the clipboard file and paste to local clipboard.  
 `paste.js`  
 
+Paste the referenced file to current directory.  
+`paste.js [-f|--file]`  
+
 Read the clipboard file and paste the referenced file to <target_path>.  
-`paste.js -f <target_path>`  
+`paste.js [-f|--file] <target_path>`  
 
 
 Endpoints

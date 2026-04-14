@@ -1,9 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { writeClipboard, fetchRemoteClipboard, readPlainTextClipboard } from '../utils/clipboardUtils.js';
-import { resolvePath } from '../utils/pathUtils.js';
-import fs from 'fs';
 import EventSource from 'eventsource';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -22,11 +19,11 @@ const port = process.env.PORT || 5460;
 // Local SSE endpoint for file paste events
 const sseFilePasteUrl = `http://localhost:${port}/filepaste`;
 
-async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
+export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
   const params = new URLSearchParams({
     fromPeerId: String(fromPeerId ?? ''),
-    filePath: String(filePath ?? ''),
-    pasteTo: String(pasteTo ?? ''),
+    fromPath: String(fromPath ?? ''),
+    saveTo: String(saveTo ?? ''),
   });
 
   return await new Promise((resolve) => {
@@ -58,53 +55,28 @@ async function triggerPeerTransfer(fromPeerId, filePath, pasteTo) {
   });
 }
 
-const remoteClipboardResult = await fetchRemoteClipboard(baseUrl);
-if (!remoteClipboardResult.success) {
-  console.error(`Error: ${remoteClipboardResult.error}`);
-  console.log("Abort: failed to fetch remote clipboard content.");
-  process.exit(1);
-}
+export async function fetchClipboard() {
+  const url = baseUrl;
 
-const { id, text } = readPlainTextClipboard(remoteClipboardResult.content);
-console.log(`Parsed clipboard content: id=\`${id}\`, text=\`${text}\``);
+  try {
+    console.log(`Fetching content from \`${url}\`.`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `HTTP ${response.status} ${response.statusText}`,
+      };
+    }
 
-const args = process.argv.slice(2);
-
-// ---- pasting remote clipboard text to local clipboard -------------
-// Has no argument.
-// e.g., `node fetch.js`
-if (args.length == 0) {
-  console.log("Pasting to clipboard...");
-
-  // Write remote clipboard content to local clipboard
-  await writeClipboard(text);
-  process.exit(0);
-}
-
-// ---- pasting a file to local path ---------------------------------
-// Has a argument.
-// e.g., `node fetch.js /path/to/destination`
-const pasteTo = resolvePath(args[0]);
-console.log("Pasting to path:", pasteTo);
-
-// Check path exist
-if (pasteTo && !fs.existsSync(pasteTo)) {
-  console.error(`Error: path \`${pasteTo}\` does not exist.`);
-  process.exit(1);
-}
-
-let success = true;
-if (text.startsWith("+file") || text.startsWith("+image")) {
-  // Fetch remote file
-  // Example: `+file[/home/user/a.txt]`
-  const match = text.match(/\[(.*?)\]/);     // (.*?)  →  non‑greedy
-  const filePath = match ? match[1] : null;  // 1 is the first capture group
-
-  // Trigger client server to fetch file.
-  success = await triggerPeerTransfer(id, filePath, pasteTo);
-}
-
-if (!success) {
-  console.error("Error: failed to fetch remote file.");
-  process.exit(1);
+    const content = await response.text();
+    return {
+      success: true,
+      content: content,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
