@@ -20,22 +20,4 @@ if [ ! -f ".env" ]; then
   exit 1
 fi
 
-ENVIRONMENT="$(grep -E '^ENVIRONMENT=' .env | cut -d '=' -f2- | tr -d '[:space:]')"
-
-if [ -z "$ENVIRONMENT" ]; then
-  echo "Error: ENVIRONMENT is not set in .env. Please run ./setup.sh first."
-  exit 1
-fi
-
-case "$ENVIRONMENT" in
-  client)
-    exec "$SCRIPT_DIR/client/copy.sh" "$@"
-    ;;
-  server)
-    exec "$SCRIPT_DIR/server/copy.sh" "$@"
-    ;;
-  *)
-    echo "Error: Unknown ENVIRONMENT '$ENVIRONMENT'. Expected 'server' or 'client'."
-    exit 1
-    ;;
-esac
+node "$SCRIPT_DIR/client/copy.js" "$@"
