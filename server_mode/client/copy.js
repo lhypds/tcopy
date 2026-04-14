@@ -1,6 +1,7 @@
 // Copy text (or a file reference) to the tcopy server.
 import { postContent } from './post.js';
 import { readSystemClipboard } from '../utils/clipboardUtils.js';
+import fs from 'fs';
 
 const args = process.argv.slice(2);
 
@@ -12,6 +13,12 @@ if (args.length === 0) {
   content = await readSystemClipboard();
 } else if ((args[0] === '-f' || args[0] === '--file') && args[1]) {
   // -f <path>: POST a file reference
+  // Check if the file exists
+  if (!fs.existsSync(args[1])) {
+    console.error(`Abort: file not exists: ${args[1]}`);
+    process.exit(1);
+  }
+
   console.log('Posting file reference to server...');
   const filePath = args[1];
   content = `+file[${filePath}]`;
