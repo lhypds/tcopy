@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeSystemClipboard, readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { fetchClipboard, triggerPeerTransfer } from './fetch.js';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
