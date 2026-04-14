@@ -2,12 +2,10 @@ import clipboard from 'clipboardy';
 
 export async function writeClipboard(content) {
   await clipboard.write(content);
-  console.log('Content copied to clipboard.');
 }
 
 export async function readClipboard() {
   const clipboardContent = await clipboard.read();
-  console.log("Content read from clipboard.");
   return clipboardContent;
 }
 
@@ -23,15 +21,6 @@ export async function fetchRemoteClipboard(url) {
     }
 
     const content = await response.text();
-
-    // Print fetched content
-    const contentReplaced = content
-      .replace(/\n/g, '<LF>')
-      .replace(/\r/g, '<CR>')
-      .replace(/\t/g, '<TAB>')
-      .replace(/ /g, '<SPACE>');
-    console.log(`Fetched content: \`${contentReplaced}\``);
-
     return {
       success: true,
       content: content,

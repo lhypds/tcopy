@@ -1,4 +1,4 @@
-// Send text (or current clipboard content) to the tcopy server.
+// Send text to the tcopy server.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
@@ -17,13 +17,8 @@ if (!baseUrl) {
 
 export async function postContent(content) {
   const url = baseUrl;
-  const contentReplaced = content
-    .replace(/\n/g, '<LF>')
-    .replace(/\r/g, '<CR>')
-    .replace(/\t/g, '<TAB>')
-    .replace(/ /g, '<SPACE>');
 
-  console.log(`Posting content: \`${contentReplaced}\``);
+  console.log(`Posting content:\n\`\`\`\n${content}\n\`\`\``);
   console.log(`Sending POST request to \`${url}\`.`);
 
   // Read client id
@@ -34,6 +29,12 @@ export async function postContent(content) {
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
+    const contentReplaced = content
+      .replace(/\n/g, '<LF>')
+      .replace(/\r/g, '<CR>')
+      .replace(/\t/g, '<TAB>')
+      .replace(/ /g, '<SPACE>');
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -46,10 +47,10 @@ export async function postContent(content) {
     console.log(`Server response: \`${body}\``);
 
     if (response.ok) {
-      console.log('Clipboard content sent.');
+      console.log('Content sent.');
       return true;
     } else {
-      console.log(`Failed to send clipboard content. Status code: ${response.status}`);
+      console.log(`Failed to send content. Status code: ${response.status}`);
       return false;
     }
   } catch (e) {
