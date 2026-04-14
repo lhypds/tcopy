@@ -24,24 +24,34 @@ if (!remoteClipboardResult.success) {
 const { id, text } = readPlainTextClipboard(remoteClipboardResult.content);
 console.log(`Remote server clipboard content (id: ${id}):\n\`\`\`\n${text.replace(/\n/g, '\\n')}\n\`\`\``);
 
+// Paste file flag
+const args = process.argv.slice(2);
+const isPasteFile = args.includes('-f') || args.includes('--file');
+
 // Normal text
-if (!text.startsWith('+file[') || !text.endsWith(']')) {
+if (!isPasteFile) {
   console.log('Pasting to local clipboard...');
   await writeSystemClipboard(text);
   console.log('Content pasted to local clipboard.');
 }
 
 // File reference
-if (text.startsWith('+file[') && text.endsWith(']')) {
+if (isPasteFile) {
+  if (!text.startsWith('+file[') || !text.endsWith(']')) {
+    console.error('Error: clipboard content is not a valid file reference.');
+    process.exit(1);
+  }
+
   const fromPeerId = id;
   const fromPath = text.slice(6, -1);
 
   // Save to
-  const args = process.argv.slice(2);
   const flagIndex = args.indexOf('-f') !== -1 ? args.indexOf('-f') : args.indexOf('--file');
   const saveTo = flagIndex !== -1
     ? (args[flagIndex + 1] ?? process.cwd())
     : "";
+
+  console.log(`Fetching remote file from peer ${fromPeerId}, remote path: ${fromPath}, saving to: ${saveTo}...`);
 
   // Check path exist
   if (!saveTo || !fs.existsSync(saveTo)) {
@@ -49,7 +59,6 @@ if (text.startsWith('+file[') && text.endsWith(']')) {
     process.exit(1);
   }
 
-  console.log(`Fetching remote file from peer ${fromPeerId}, remote path: ${fromPath}, saving to: ${saveTo}...`);
   const success = await triggerPeerTransfer(fromPeerId, fromPath, saveTo);
   if (!success) {
     console.error("Error: failed to fetch remote file.");
