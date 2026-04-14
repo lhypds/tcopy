@@ -3,22 +3,20 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { readId } from '../utils/idUtils.js';
-import { readClipboard } from '../utils/clipboardUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const REQUEST_TIMEOUT_MS = parseFloat(process.env.REQUEST_TIMEOUT_SECONDS ?? '5') * 1000;
 
-const args = process.argv.slice(2);
 const baseUrl = process.env.SERVER_BASE_URL;
-
 if (!baseUrl) {
   console.error('Error: SERVER_BASE_URL not found in .env file');
   process.exit(1);
 }
 
-async function postContent(url, content) {
+export async function postContent(content) {
+  const url = baseUrl;
   const contentReplaced = content
     .replace(/\n/g, '<LF>')
     .replace(/\r/g, '<CR>')
@@ -64,7 +62,3 @@ async function postContent(url, content) {
     return false;
   }
 }
-
-const content = args.length > 0 ? args.join(' ').trim() : await readClipboard();
-const success = await postContent(baseUrl, content);
-if (!success) process.exit(1);
