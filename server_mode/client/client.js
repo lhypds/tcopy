@@ -298,10 +298,10 @@ connectPeer();
 // Paste SSE: Local SSE route for accepting paste events and triggering PeerJS file transfer
 app.get('/filepaste', async (req, res) => {
   // Get paste parameters from query string
-  const { fromPeerId, fromPath, pasteTo } = req.query || {};
+  const { fromPeerId, fromPath, saveTo } = req.query || {};
 
   // Log the paste request
-  log('info', `Paste SSE: Received paste SSE request: ${JSON.stringify({ fromPeerId, fromPath, pasteTo })}`);
+  log('info', `Paste SSE: Received paste SSE request: ${JSON.stringify({ fromPeerId, fromPath, saveTo })}`);
 
   if (!fromPeerId) {
     log('warn', 'Paste SSE: Request missing fromPeerId.');
@@ -313,16 +313,16 @@ app.get('/filepaste', async (req, res) => {
     return res.status(400).json({ success: false, error: 'fromPath is required' });
   }
 
-  if (!pasteTo) {
-    log('warn', 'Paste SSE: Request missing pasteTo.');
-    return res.status(400).json({ success: false, error: 'pasteTo is required' });
+  if (!saveTo) {
+    log('warn', 'Paste SSE: Request missing saveTo.');
+    return res.status(400).json({ success: false, error: 'saveTo is required' });
   }
 
-  // Check paste to path exists
-  const pasteTo_ = resolvePath(pasteTo);
-  if (!fs.existsSync(pasteTo_) || !fs.statSync(pasteTo_).isDirectory()) {
-    log('warn', `Paste SSE: Request pasteTo path does not exist or is not a directory: pasteTo = ${pasteTo_}`);
-    return res.status(400).json({ success: false, error: 'pasteTo path does not exist or is not a directory' });
+  // Check save to path exists
+  const saveTo_ = resolvePath(saveTo);
+  if (!fs.existsSync(saveTo_) || !fs.statSync(saveTo_).isDirectory()) {
+    log('warn', `Paste SSE: Request saveTo path does not exist or is not a directory: saveTo = ${saveTo_}`);
+    return res.status(400).json({ success: false, error: 'saveTo path does not exist or is not a directory' });
   }
 
   // Set SSE headers
@@ -387,7 +387,7 @@ app.get('/filepaste', async (req, res) => {
         lastNotifiedProgress = -1;
 
         // Open write stream immediately so chunks stream straight to disk
-        const destDir = resolvePath(pasteTo);
+        const destDir = resolvePath(saveTo);
         const destPath = path.join(destDir, fileMeta.name);
         fs.mkdirSync(destDir, { recursive: true });
         writeStream = fs.createWriteStream(destPath);
@@ -414,7 +414,7 @@ app.get('/filepaste', async (req, res) => {
             },
             pasteTo: {
               peerId: id,
-              path: pasteTo,
+              path: saveTo,
             },
             receivedSize: receivedSize,
             totalSize: fileMeta.size,
@@ -428,7 +428,7 @@ app.get('/filepaste', async (req, res) => {
       if (data.type === 'file-end') {
         log('info', `Paste SSE | Peer connection: Data, file end received, peer = ${conn.peer}`);
 
-        const destDir = resolvePath(pasteTo);
+        const destDir = resolvePath(saveTo);
         const destPath = path.join(destDir, fileMeta.name);
 
         // Flush and close the write stream before reporting success
