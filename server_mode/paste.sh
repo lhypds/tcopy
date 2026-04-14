@@ -20,4 +20,10 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
+ENVIRONMENT=$(grep -E '^ENVIRONMENT=' .env | cut -d '=' -f2 | tr -d '[:space:]')
+if [ "$ENVIRONMENT" != "client" ]; then
+    echo "Error: ENVIRONMENT is '${ENVIRONMENT}', not 'client'. This command is for clients only."
+    exit 1
+fi
+
 node "$SCRIPT_DIR/client/paste.js" "$@"
