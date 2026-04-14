@@ -52,7 +52,7 @@ if (isPasteFile) {
     ? (args[flagIndex + 1] ?? process.cwd())
     : "";
 
-  console.log(`Fetching remote file from peer ${fromPeerId}, remote path: ${fromPath}, saving to: ${saveTo}...`);
+  console.log(`Fetching remote file from peer, id = ${fromPeerId}, remote path = \`${fromPath}\`, saving to = \`${saveTo}\``);
 
   // Check path exist
   if (!saveTo || !fs.existsSync(saveTo)) {
@@ -62,7 +62,6 @@ if (isPasteFile) {
 
   const success = await triggerPeerTransfer(fromPeerId, fromPath, saveTo);
   if (!success) {
-    console.error("Error: failed to fetch remote file.");
     console.log('Abort: failed to fetch remote file.');
     process.exit(1);
   }
