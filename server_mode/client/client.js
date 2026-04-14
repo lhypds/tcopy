@@ -125,14 +125,9 @@ async function connectSSE() {
             return;
           }
 
-          const contentReplaced = text
-            .replace(/\n/g, '<LF>')
-            .replace(/\r/g, '<CR>')
-            .replace(/\t/g, '<TAB>')
-            .replace(/ /g, '<SPACE>');
-
           await clipboard.write(text);
-          log('info', `SSE: Message, content received, from id = ${id_}, data timestamp = ${timestamp}), content = \`${contentReplaced}\``);
+
+          log('info', `SSE: Message, content received, from id = ${id_}, data timestamp = ${timestamp}), content = \n\n\`\`\`\n${text}\n\`\`\`\n`);
         } catch (e) {
           log('error', `SSE: Message, error, error = ${JSON.stringify(e)}`);
         }
