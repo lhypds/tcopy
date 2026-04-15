@@ -21,6 +21,11 @@ Copy the file at <file_path> to the storage and write a reference to it in the c
 Clipboard text example:  
 `+file[~/Documents/report.pdf]`  
 
+Copy multiple files to the storage and write multiple file references to the clipboard file.  
+`copy.py [-f|--file] <file_path_1> <file_path_2> ...`  
+Clipboard text example:  
+`+file[~/Downloads/a.txt] +file[~/Downloads/b.mp3]`  
+
 2. `paste.py`  
 
 Read the clipboard file and paste to local clipboard.  
@@ -30,13 +35,14 @@ paste the referenced file to current directory.
 `paste.py [-f|--file]`  
 
 Read the clipboard file and paste the referenced file to <target_path>.  
-`paste.py [-f|--file] <target_path>`
+`paste.py [-f|--file] <target_path>`  
+`<target_path>` must be a directory.  
 
 
 Watcher
 -------
 
-Watch the clipboard file changes and automatically sync to local clipboard.
+Watch the clipboard file changes and automatically sync to local clipboard.  
 
 To start the watcher, run:  
-`python watcher.py`  
+`python watch.py`  
