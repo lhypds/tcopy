@@ -47,6 +47,12 @@ class FileChangeHandler(FileSystemEventHandler):
                     with open(event.src_path, "r", encoding="utf-8") as file:
                         content = file.read()
 
+                        if content.startswith("+file[") and content.endswith("]"):
+                            logging.info(
+                                f"File reference detected in clipboard: {content}. Skipping clipboard update."
+                            )
+                            return
+
                         pyperclip.copy(content)
                         timeString = time.strftime(
                             "%Y-%m-%d %H:%M:%S", time.localtime()
