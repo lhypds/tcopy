@@ -18,43 +18,37 @@ Two Modes
 
 A server.  
 Machine A and Machine B.  
-
-For text  
-Machine A copies text, it will be sent to the server, and then sent to Machine B.  
-
-For files  
-Machine A copies a file, it will be send as file reference to server.  
-On Machine B, if use `paste` command, it will start transfering the referenced file from Machine A to Machine B.  
-
-Setup  
 On server, machine A and B, clone code and run `./tcopy.sh setup`.  
 Select server mode, and select environment.  
 Setup `.env` file in `server_mode` folder.  
 
-Start  
-On server, run `tcopy start` to start the server.  
-On machine A and B, run `tcopy start` to start the client.  
+On server, machine A and B, run `./tcopy.sh start` to start `server` and `client`.  
 Make sure the SSE and Peer both connected to the server.  
+
+For text copy  
+Machine A use `copy` command to copy text, it will be sent to the server, and then sent to Machine B's clipboard.  
+
+For files  
+Machine A use `copy -f <file_path>` command to copy a file, it will be send as file reference to server.  
+On Machine B, if use `paste -f <target_path>` command, it will start a P2P transfering the file from Machine A to Machine B.  
 
 * Storage Mode  
 
 A shared file storage.  
 Machine A and Machine B.  
-
-For text:  
-Machine A copies text, it will be sent to the shared storage `.clipboard`, on Machine B if user started a watcher, it will get the text from the shared storage and copy it to local clipboard.  
-
-For files:  
-Machine A copies a file, it will be copied to the shared storage. And on Machine B, if use `paste` command, it will copy from the file storage.  
-
-Setup:  
 On machine A and B, clone code and run `./tcopy.sh setup`. 
 Select storage mode. For storage path, you can select a local folder, or a network share folder.
 Setup `.env` file in `storage_mode` folder.  
 
-Watcher:
 In storage mode, you can start a watcher to automatically get the clipboard content from the shared storage.  
-Use `tcopy start` to start the watcher, and use `tcopy stop` to stop it.  
+Use `./tcopy.sh start` to start the watcher, and use `./tcopy.sh stop` to stop it.  
+
+For text copy  
+Machine A use `copy` command to copy text, it will be sent to the shared storage `.clipboard`, then on Machine B, use `paste` command it will get the text to local clipboard.  
+On Machine B if user started a watcher, it will get the text from the shared storage and copy it to local clipboard.  
+
+For file copy  
+Machine A use `copy -f <file_path>` command to copy a file, it will be copied to the shared storage. And on Machine B, if use `paste -f <target_path>` command, it will copy from the file storage.  
 
 
 Commands
@@ -94,10 +88,10 @@ Transfer file from server/storage to target path.
 Clipboard
 ---------
 
-`.clipboard` file is a plain text file.  
+`.clipboard` file is a plain text file in `tcopy`.  
 
 Basically it is the content of the clipboard text.  
-If there is an source ID, the content will starts with `###ID=source_id###`.  
+If there is an source ID, the content starts with `###ID=source_id###`.  
 
 Example:  
 `###ID=1775993192###Hello World`  
@@ -118,10 +112,11 @@ Python3 (file storage mode), Node.js (for server mode)
 
 1. Setup `tcopy`
 
-Use `tcopy setup`, select the mode and environment, setup will be done automatically.  
+Use `./tcopy.sh setup`, select the mode and environment, setup will be done automatically.  
 
 (Optional)  
-Use `tcopy install` to install as a commmand.  
+Use `./tcopy.sh install` to install as a commmand.  
+After install you can type `tcopy` in terminal to use it.  
 
 2. Shortcut Setup
 
@@ -131,7 +126,7 @@ Use like WinHotKey.
 * macOS  
 Keyboard Maestro  
 Create new action with a custom shortcut.  
-Trigger a "Execute Shell Script" to execute `tcopy`.  
+Trigger a "Execute Shell Script" to execute `./tcopy.sh`.  
 
 * Linux  
-Use system settings to set up a custom shortcut to execute `tcopy`.  
+Use system settings to set up a custom shortcut to execute `./tcopy.sh`.  
