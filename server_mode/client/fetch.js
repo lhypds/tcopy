@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
+import { clearProgressBar, renderProgressBar } from '../utils/progressUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -30,6 +31,7 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
 
   return await new Promise((resolve) => {
     const es = new EventSource(`${sseFilePasteUrl}?${params.toString()}`);
+    let progressActive = false;
     let timeout = setTimeout(() => {
       es.close();
       resolve(false);
@@ -37,7 +39,26 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
 
     es.onmessage = (event) => {
       const msg = event.data?.trim();
+      let parsedMessage = null;
+
       if (msg) {
+        try {
+          parsedMessage = JSON.parse(msg);
+        } catch {
+          parsedMessage = null;
+        }
+      }
+
+      if (parsedMessage?.type === 'progress') {
+        progressActive = true;
+        renderProgressBar(parsedMessage);
+      } else if (msg) {
+        if (progressActive) {
+          clearProgressBar();
+          process.stdout.write('\n');
+          progressActive = false;
+        }
+
         console.log('SSE:', msg);
       }
 
@@ -66,6 +87,12 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
     });
 
     es.onerror = () => {
+      if (progressActive) {
+        clearProgressBar();
+        process.stdout.write('\n');
+        progressActive = false;
+      }
+
       clearTimeout(timeout);
       es.close();
       resolve(false);
