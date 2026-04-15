@@ -3,7 +3,7 @@ tcopy
 =====
 
 
-`tcopy` is originally for only copying text, so I called it `tcopy`, also it can copy files.  
+`tcopy` is originally for only copying text, so I called it `tcopy`, it can copy files as well.  
 
 Support macOS, Windows and Linux.  
 So, if the P2P not blocked by your NAT, basically it can copy any file from any machine to any machine.  
