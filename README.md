@@ -62,22 +62,22 @@ Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|
 `tcopy`  
 Copy the current clipboard text to the server or storage's clipboard.  
 
-Text copy
+Text copy  
 `tcopy <text>` or `tcopy copy <text>`  
 Copy the specified text to the clipboard and send it to the server or storage's clipboard.  
 
-File copy
+File copy  
 `tcopy -f <file_path>` or `tcopy copy -f <file_path>`  
 For server mode, it will copy the file path to the server's clipboard file.  
 For storage mode, it will copy the file to the shared storage, and copy the file path to the shared storage's clipboard file.  
 
 * Paste  
 
-Text paste
+Text paste  
 `tcopy paste`  
 Get the current text from the server/storage and copy it to the local clipboard.  
 
-File paste
+File paste  
 `tcopy paste -f`  
 Transfer file from server/storage to current directory.  
 
