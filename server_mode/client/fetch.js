@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import { clearProgressBar, renderProgressBar } from '../utils/progressUtils.js';
+import { createLogger } from '../utils/logUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -20,6 +21,9 @@ const port = process.env.PORT || 5460;
 // Local SSE endpoint for file paste events
 const sseFilePasteUrl = `http://localhost:${port}/filepaste`;
 
+// Logger
+const log = createLogger('peer.log');
+
 export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
   const params = new URLSearchParams({
     fromPeerId: String(fromPeerId ?? ''),
@@ -27,7 +31,7 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
     saveTo: String(saveTo ?? ''),
   });
 
-  console.log(`Triggering peer transfer...`);
+  log(`info`, `Triggering peer transfer...`);
 
   return await new Promise((resolve) => {
     const es = new EventSource(`${sseFilePasteUrl}?${params.toString()}`);
@@ -59,7 +63,7 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
           progressActive = false;
         }
 
-        console.log('SSE:', msg);
+        log('info', `SSE: ${msg}`);
       }
 
       // Reset the overall timeout on each incoming message
@@ -83,7 +87,7 @@ export async function triggerPeerTransfer(fromPeerId, fromPath, saveTo) {
     };
 
     es.addEventListener('heartbeat', (e) => {
-      console.log(`SSE: Heartbeat (server: ${baseUrl}, data: ${e.data})`);
+      log('debug', `SSE: Heartbeat (server: ${baseUrl}, data: ${e.data})`);
     });
 
     es.onerror = () => {
@@ -104,7 +108,7 @@ export async function fetchClipboard() {
   const url = baseUrl;
 
   try {
-    console.log(`Fetching content from \`${url}\`.`);
+    log('info', `Fetching content from \`${url}\`.`);
     const response = await fetch(url);
     if (!response.ok) {
       return {
