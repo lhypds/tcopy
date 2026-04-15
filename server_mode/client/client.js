@@ -214,13 +214,25 @@ async function connectPeer() {
             const filePath = resolvePath(data.filePath);
             if (!fs.existsSync(filePath)) {
               log('warn', `Peer | File not found: filePath = ${filePath}`);
+              conn.send({ type: 'file-error', error: `Source path does not exist: ${filePath}` });
+              conn.close();
+              return;
+            }
+
+            const fileStats = fs.statSync(filePath);
+            if (!fileStats.isFile()) {
+              const errorMessage = fileStats.isDirectory()
+                ? `Source path is a directory, but only regular files are supported: ${filePath}`
+                : `Source path is not a regular file: ${filePath}`;
+              log('warn', `Peer | Connection: Data, invalid file request, reason = ${errorMessage}`);
+              conn.send({ type: 'file-error', error: errorMessage });
               conn.close();
               return;
             }
 
             log('info', `Peer | Connection: Data, file request valid, send file: filePath = ${filePath}`);
             const fileName = path.basename(filePath);
-            const fileSize = fs.statSync(filePath).size;
+            const fileSize = fileStats.size;
             const chunkSize = 64 * 1024; // 64KB
             const MAX_BUFFERED_AMOUNT = 16 * chunkSize; // 1MB
 
@@ -374,6 +386,16 @@ app.get('/filepaste', async (req, res) => {
     });
 
     conn.on("data", async (data) => {
+      if (data.type === 'file-error') {
+        log('warn', `Paste SSE | Peer connection: Data, file error received, peer = ${conn.peer}, error = ${data.error}`);
+
+        if (writeStream && !writeStream.closed) writeStream.destroy();
+
+        res.write(`data: Error: ${data.error}\n\n`);
+        conn.close();
+        return;
+      }
+
       // Handle file transfer
       if (data.type === 'file-meta') {
         log('info', `Paste SSE | Peer connection: Data, file meta received, peer = ${conn.peer}, meta = ${JSON.stringify(data)}`);

@@ -24,6 +24,15 @@ if (args.length === 0) {
       console.error(`Abort: file not exists: ${filePath}`);
       process.exit(1);
     }
+
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile()) {
+      const kind = stats.isDirectory()
+        ? 'directory (macOS .app bundles are directories)'
+        : 'non-regular file';
+      console.error(`Abort: only regular files are supported in server mode; unsupported ${kind}: ${filePath}`);
+      process.exit(1);
+    }
   }
 
   console.log('Posting file reference(s) to server...');

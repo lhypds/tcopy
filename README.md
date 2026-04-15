@@ -31,6 +31,7 @@ Machine A use `copy` command to copy text, it will be sent to the server, and th
 For files  
 Machine A use `copy -f <file_path>` command to copy a file, it will be send as file reference to server.  
 On Machine B, if use `paste -f <target_path>` command, it will start a P2P transfering the file from Machine A to Machine B.  
+Server mode supports regular files only. Directories, including macOS `.app` bundles, are not transferred.  
 
 * Storage Mode  
 
@@ -70,6 +71,7 @@ File copy
 `tcopy -f <file_path>` or `tcopy copy -f <file_path>`  
 For server mode, it will copy the file reference to the server's clipboard file.  
 For storage mode, it will copy the file to the shared storage, and copy the file reference to the shared storage's clipboard file.  
+In server mode, `<file_path>` must be a regular file. Directories such as macOS application bundles are rejected.  
 
 Multiple files copy
 `tcopy -f <file_path_1> <file_path_2> ...` or `tcopy copy -f <file_path_1> <file_path_2> ...`  
