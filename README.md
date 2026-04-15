@@ -68,8 +68,13 @@ Copy the specified text to the clipboard and send it to the server or storage's 
 
 File copy  
 `tcopy -f <file_path>` or `tcopy copy -f <file_path>`  
-For server mode, it will copy the file path to the server's clipboard file.  
-For storage mode, it will copy the file to the shared storage, and copy the file path to the shared storage's clipboard file.  
+For server mode, it will copy the file reference to the server's clipboard file.  
+For storage mode, it will copy the file to the shared storage, and copy the file reference to the shared storage's clipboard file.  
+
+Multiple files copy
+`tcopy -f <file_path_1> <file_path_2> ...` or `tcopy copy -f <file_path_1> <file_path_2> ...`  
+For server mode, it will copy the file references to the server's clipboard file.  
+For storage mode, it will copy the files to the shared storage, and copy the file references to the shared storage's clipboard file.  
 
 * Paste  
 
@@ -79,10 +84,10 @@ Get the current text from the server/storage and copy it to the local clipboard.
 
 File paste  
 `tcopy paste -f`  
-Transfer file from server/storage to current directory.  
+Transfer file(s) from server/storage to current directory.  
 
 `tcopy paste -f <target_path>`  
-Transfer file from server/storage to target path.  
+Transfer file(s) from server/storage to target path.  
 
 
 Clipboard
