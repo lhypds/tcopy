@@ -121,7 +121,7 @@ async function connectSSE() {
           }
 
           if (text.startsWith('+file[') && text.endsWith(']')) {
-            log('info', `SSE: Message, file reference received, from id = ${id_}, data timestamp = ${timestamp}), file reference = ${text}`);
+            log('info', `SSE: Message, file reference received, ignored, from id = ${id_}, data timestamp = ${timestamp}), file reference = ${text}`);
             return;
           }
 
