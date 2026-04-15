@@ -11,17 +11,23 @@ if (args.length === 0) {
   // No arguments: POST current clipboard content
   console.log('Reading content from local clipboard...');
   content = await readSystemClipboard();
-} else if ((args[0] === '-f' || args[0] === '--file') && args[1]) {
-  // -f <path>: POST a file reference
-  // Check if the file exists
-  if (!fs.existsSync(args[1])) {
-    console.error(`Abort: file not exists: ${args[1]}`);
+} else if (args[0] === '-f' || args[0] === '--file') {
+  if (args.length < 2) {
+    console.error('Abort: missing file path after -f/--file.');
     process.exit(1);
   }
 
-  console.log('Posting file reference to server...');
-  const filePath = args[1];
-  content = `+file[${filePath}]`;
+  const filePaths = args.slice(1);
+
+  for (const filePath of filePaths) {
+    if (!fs.existsSync(filePath)) {
+      console.error(`Abort: file not exists: ${filePath}`);
+      process.exit(1);
+    }
+  }
+
+  console.log('Posting file reference(s) to server...');
+  content = filePaths.map(filePath => `+file[${filePath}]`).join(' ');
 } else {
   // First argument is the text to POST
   console.log('Posting text to server...');

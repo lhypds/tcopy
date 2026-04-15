@@ -30,6 +30,11 @@ Write a reference to server's clipboard file.
 Clipboard text example:  
 `+file[~/Documents/report.pdf]`  
 
+Write multiple file references to the server's clipboard file.  
+`copy.js [-f|--file] <file_path_1> <file_path_2> ...`  
+Clipboard text example:  
+`+file[~/Downloads/a.txt] +file[~/Downloads/b.mp3]`  
+
 2. `paste.js`  
 
 Read the clipboard file and paste to local clipboard.  
@@ -40,6 +45,7 @@ Paste the referenced file to current directory.
 
 Read the clipboard file and paste the referenced file to <target_path>.  
 `paste.js [-f|--file] <target_path>`  
+`<target_path>` must be an existing directory.  
 
 
 Endpoints

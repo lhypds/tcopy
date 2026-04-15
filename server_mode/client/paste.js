@@ -6,6 +6,17 @@ import { writeSystemClipboard, readPlainTextClipboard } from '../utils/clipboard
 import { fetchClipboard, triggerPeerTransfer } from './fetch.js';
 import fs from 'fs';
 
+const FILE_REF_PATTERN = /\+file\[([^\]]+)\]/g;
+const FILE_REF_CONTENT_PATTERN = /^\s*(?:\+file\[[^\]]+\])(?:\s+\+file\[[^\]]+\])*\s*$/;
+
+function parseFileReferences(text) {
+  if (!FILE_REF_CONTENT_PATTERN.test(text)) {
+    return [];
+  }
+
+  return Array.from(text.matchAll(FILE_REF_PATTERN), match => match[1]);
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
@@ -28,6 +39,7 @@ console.log(`Remote server clipboard content (id: ${id}):\n\`\`\`\n${text.replac
 // Paste file flag
 const args = process.argv.slice(2);
 const isPasteFile = args.includes('-f') || args.includes('--file');
+const fileRefs = parseFileReferences(text);
 
 // Normal text
 if (!isPasteFile) {
@@ -38,13 +50,12 @@ if (!isPasteFile) {
 
 // File reference
 if (isPasteFile) {
-  if (!text.startsWith('+file[') || !text.endsWith(']')) {
+  if (fileRefs.length === 0) {
     console.error('Error: clipboard content is not a valid file reference.');
     process.exit(1);
   }
 
   const fromPeerId = id;
-  const fromPath = text.slice(6, -1);
 
   // Save to
   const flagIndex = args.indexOf('-f') !== -1 ? args.indexOf('-f') : args.indexOf('--file');
@@ -60,10 +71,19 @@ if (isPasteFile) {
     process.exit(1);
   }
 
-  const success = await triggerPeerTransfer(fromPeerId, fromPath, saveTo);
-  if (!success) {
-    console.log('Abort: failed to fetch remote file.');
+  if (!fs.statSync(saveTo).isDirectory()) {
+    console.error(`Error: path \`${saveTo}\` is not a directory.`);
     process.exit(1);
   }
-  console.log('File fetched and saved.');
+
+  for (const fromPath of fileRefs) {
+    console.log(`Fetching remote file from peer, id = ${fromPeerId}, remote path = \`${fromPath}\`, saving to = \`${saveTo}\``);
+
+    const success = await triggerPeerTransfer(fromPeerId, fromPath, saveTo);
+    if (!success) {
+      console.log('Abort: failed to fetch remote file.');
+      process.exit(1);
+    }
+  }
+  console.log('File(s) fetched and saved.');
 }
