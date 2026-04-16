@@ -55,7 +55,6 @@ Machine A use `copy -f <file_path>` command to copy a file, it will be copied to
 Commands
 --------
 
-`tcopy`  
 Usage: tcopy [copy|paste|clear|reset|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]  
 
 | Command         | Description                                             |
