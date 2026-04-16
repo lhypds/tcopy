@@ -73,7 +73,7 @@ For server mode, it will copy the file reference to the server's clipboard file.
 For storage mode, it will copy the file to the shared storage, and copy the file reference to the shared storage's clipboard file.  
 In server mode, `<file_path>` must be a regular file. Directories such as macOS application bundles are rejected.  
 
-Multiple files copy
+Multiple files copy  
 `tcopy -f <file_path_1> <file_path_2> ...` or `tcopy copy -f <file_path_1> <file_path_2> ...`  
 For server mode, it will copy the file references to the server's clipboard file.  
 For storage mode, it will copy the files to the shared storage, and copy the file references to the shared storage's clipboard file.  
@@ -117,7 +117,7 @@ Setup
 Requirements:
 Python3 (file storage mode), Node.js (for server mode)  
 
-1. Setup `tcopy`
+1. Setup `tcopy`  
 
 Use `./tcopy.sh setup`, select the mode and environment, setup will be done automatically.  
 
@@ -125,7 +125,7 @@ Use `./tcopy.sh setup`, select the mode and environment, setup will be done auto
 Use `./tcopy.sh install` to install as a commmand.  
 After install you can type `tcopy` in terminal to use it.  
 
-2. Shortcut Setup
+2. Shortcut Setup  
 
 * Windows  
 Use like WinHotKey.  
