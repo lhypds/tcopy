@@ -56,7 +56,24 @@ Commands
 --------
 
 `tcopy`  
-Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]  
+Usage: tcopy [copy|paste|clear|reset|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]  
+
+| Command         | Description                                       |
+|-----------------|---------------------------------------------------|
+| `copy`          | Copy text or files to server/storage clipboard    |
+| `paste`         | Paste text or files from server/storage clipboard |
+| `clear`         | Clear the clipboard, log files                    |
+| `reset`         | Reset all                                         |
+| `install`       | Install as a system command                       |
+| `uninstall`     | Uninstall the system command                      |
+| `update`        | Update tcopy, run `git pull`                      |
+| `setup`         | Initial setup                                     |
+| `start`         | Start server/watcher                              |
+| `stop`          | Stop server/watcher                               |
+| `restart`       | Restart server/watcher                            |
+| `info`          | Show information                                  |
+| `-v, --version` | Show version                                      |
+| `-h, --help`    | Show help                                         |
 
 * Copy  
 

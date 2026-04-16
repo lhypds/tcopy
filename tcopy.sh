@@ -218,7 +218,7 @@ showInfo() {
 }
 
 printUsage() {
-	echo "Usage: tcopy [copy|paste|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
+	echo "Usage: tcopy [copy|paste|clear|reset|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]"
 }
 
 case "$command" in
@@ -229,6 +229,12 @@ case "$command" in
 	paste)
 		readEnv
 		runCommandScript "paste" "${@:2}"
+		;;
+	clear)
+		runRootScript "clear"
+		;;
+	reset)
+		runRootScript "reset"
 		;;
 	install)
 		runRootScript "install"
