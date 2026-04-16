@@ -58,24 +58,25 @@ Commands
 `tcopy`  
 Usage: tcopy [copy|paste|clear|reset|install|uninstall|update|setup|start|stop|restart|info|-v|--version|-h|--help|<text>]  
 
-| Command         | Description                                       |
-|-----------------|---------------------------------------------------|
-| `copy`          | Copy text or files to server/storage clipboard    |
-| `paste`         | Paste text or files from server/storage clipboard |
-| `clear`         | Clear the clipboard, log files                    |
-| `reset`         | Reset all                                         |
-| `install`       | Install as a system command                       |
-| `uninstall`     | Uninstall the system command                      |
-| `update`        | Update tcopy, run `git pull`                      |
-| `setup`         | Initial setup                                     |
-| `start`         | Start server/watcher                              |
-| `stop`          | Stop server/watcher                               |
-| `restart`       | Restart server/watcher                            |
-| `info`          | Show information                                  |
-| `-v, --version` | Show version                                      |
-| `-h, --help`    | Show help                                         |
+| Command         | Description                                             |
+|-----------------|---------------------------------------------------------|
+| `<text>`        | Copy text or files to server/storage clipboard          |
+| `copy <text>`   | Copy text or files to server/storage clipboard          |
+| `paste`         | Paste text or files from server/storage clipboard       |
+| `clear`         | Clear the clipboard, log files                          |
+| `reset`         | Reset all                                               |
+| `install`       | Install as a system command                             |
+| `uninstall`     | Uninstall the system command                            |
+| `update`        | Update tcopy, run `git pull`                            |
+| `setup`         | Initial setup                                           |
+| `start`         | Start server/watcher                                    |
+| `stop`          | Stop server/watcher                                     |
+| `restart`       | Restart server/watcher                                  |
+| `info`          | Show information                                        |
+| `-v, --version` | Show version                                            |
+| `-h, --help`    | Show help                                               |
 
-* Copy  
+* `copy`  
 
 `tcopy`  
 Copy the current clipboard text to the server or storage's clipboard.  
@@ -95,7 +96,7 @@ Multiple files copy
 For server mode, it will copy the file references to the server's clipboard file.  
 For storage mode, it will copy the files to the shared storage, and copy the file references to the shared storage's clipboard file.  
 
-* Paste  
+* `paste`  
 
 Text paste  
 `tcopy paste`  
@@ -109,10 +110,10 @@ Transfer file(s) from server/storage to current directory.
 Transfer file(s) from server/storage to target path.  
 
 
-Clipboard
----------
+`.clipboard`
+------------
 
-`.clipboard` file is a plain text file in `tcopy`.  
+`.clipboard` file is a plain text file in `tcopy/server_mode/server` or `tcopy/storage_mode`.  
 
 Basically it is the content of the clipboard text.  
 If there is an source ID, the content starts with `###ID=source_id###`.  
