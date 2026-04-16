@@ -1,17 +1,18 @@
 #!/bin/bash
 
-# PM2
-pm2 delete ecosystem.config.cjs
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # logs
-rm client/client.log
-rm server/server.log
+rm -f client/client.log
+rm -f client/peer.log
+rm -f server/server.log
 
 # id
-rm client/id
-rm server/id
+rm -f client/id
+rm -f server/id
 
 # .clipboard
-rm server/.clipboard
+rm -f server/.clipboard
 
-echo "Cleared."
+echo "Server mode files cleared."
