@@ -11,6 +11,7 @@ export async function readSystemClipboard() {
 
 export function readPlainTextClipboard(content) {
   const id = content.match(/###ID=(.*?)###/)?.[1] || null;
+  if (!id) return { id: null, text: content };
   const text = content.replace(`###ID=${id}###`, '');
   return { id, text }
 }

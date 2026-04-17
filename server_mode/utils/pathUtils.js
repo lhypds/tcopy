@@ -14,5 +14,5 @@ export function resolvePath(inputPath) {
     return path.join(os.homedir(), inputPath.slice(2));
   }
 
-  return inputPath;
+  return path.resolve(inputPath);
 }

@@ -10,6 +10,8 @@ import { createLogger } from '../utils/logUtils.js';
 import { startSseHeartbeat, resetSseTimeout } from '../utils/sseUtils.js';
 import { RECONNECT_DELAY } from '../constants.js';
 import express from 'express';
+import { fetchClipboard } from './fetch.js';
+import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -190,7 +192,7 @@ async function connectPeer() {
 
       // Data source side: handle incoming connections and serve file requests
       peer.on("connection", (conn) => {
-        log('info', `Peer: Incoming connection from peer = ${conn.peer}.`);
+        log('info', `Peer: Incoming connection, peer = ${conn.peer}.`);
 
         conn.on("open", () => {
           log('info', `Peer | Connection: Open, peer = ${conn.peer}`);
@@ -211,6 +213,7 @@ async function connectPeer() {
           if (data && data.type === 'file_request' && data.filePath) {
             log('info', `Peer | Connection: Data, file request, filePath = ${data.filePath}`);
 
+            // I. Basic validations
             const filePath = resolvePath(data.filePath);
             if (!fs.existsSync(filePath)) {
               log('warn', `Peer | File not found: filePath = ${filePath}`);
@@ -230,12 +233,43 @@ async function connectPeer() {
               return;
             }
 
+            // II. Security check
+            const remoteClipboardResult = await fetchClipboard();
+            if (!remoteClipboardResult.success) {
+              log('error', `Peer | Connection: Data, Abort: failed to fetch remote clipboard content, error = ${remoteClipboardResult.error}`);
+              conn.send({ type: 'file-error', error: 'Failed to verify file request: unable to fetch remote clipboard content' });
+              conn.close();
+              return;
+            }
+
+            // The remote clipboard content must match the current client id, and include the file reference for the requested file, to prevent malicious actors from requesting arbitrary files without the user's consent
+            const { id: id_, text } = readPlainTextClipboard(remoteClipboardResult.content);
+
+            // Check id
+            if (id_ !== id) {
+              log('warn', `Peer | Connection: Data, id mismatch, expected = ${id}, clipboard id = ${id_}, aborting file transfer for filePath = ${filePath}`);
+              conn.send({ type: 'file-error', error: 'Failed to verify file request: peer ID mismatch' });
+              conn.close();
+              return;
+            }
+
+            // Check file reference
+            const expectedFileRef = `+file[${data.filePath}]`;
+            if (!text.includes(expectedFileRef)) {
+              log('warn', `Peer | Connection: Data, file reference mismatch, expected = ${expectedFileRef}, clipboard content = ${text}, aborting file transfer for filePath = ${filePath}`);
+              conn.send({ type: 'file-error', error: 'Failed to verify file request: file reference mismatch' });
+              conn.close();
+              return;
+            }
+
+            // III. File transfer
             log('info', `Peer | Connection: Data, file request valid, send file: filePath = ${filePath}`);
             const fileName = path.basename(filePath);
             const fileSize = fileStats.size;
             const chunkSize = 64 * 1024; // 64KB
             const MAX_BUFFERED_AMOUNT = 16 * chunkSize; // 1MB
 
+            // !Start
             conn.send({
               type: 'file-meta',
               name: fileName,
@@ -263,6 +297,7 @@ async function connectPeer() {
               return;
             }
 
+            // !End
             conn.send({ type: 'file-end' });
             log('info', `Peer | Connection: Data, file sent: filePath = ${filePath}, size = ${fileSize} bytes`);
           }
