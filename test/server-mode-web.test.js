@@ -20,6 +20,7 @@ test('HTML is selected only when explicitly accepted', () => {
 test('the public Web UI exposes clipboard controls and server information', () => {
   const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8');
   const script = fs.readFileSync(path.join(publicDir, 'app.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(publicDir, 'styles.css'), 'utf8');
   const clientFetch = fs.readFileSync(path.join(projectRoot, 'server_mode', 'client', 'fetch.js'), 'utf8');
 
   assert.match(html, /id="clipboard"/);
@@ -30,5 +31,6 @@ test('the public Web UI exposes clipboard controls and server information', () =
   assert.match(html, />Endpoints</);
   assert.match(script, /Accept: 'text\/plain'/);
   assert.match(script, /new EventSource/);
+  assert.match(styles, /#clipboard[\s\S]*font-family:\s*"Fira Code VF"/);
   assert.match(clientFetch, /Accept: 'text\/plain'/);
 });
