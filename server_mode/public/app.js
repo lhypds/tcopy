@@ -1,4 +1,5 @@
 const clipboardField = document.getElementById('clipboard');
+const resizeHandle = document.getElementById('resize-handle');
 const copyButton = document.getElementById('copy-button');
 const saveButton = document.getElementById('save-button');
 const actionMessage = document.getElementById('action-message');
@@ -11,6 +12,7 @@ const updatedStatus = document.getElementById('updated-status');
 const browserIdKey = 'tcopy-browser-id';
 const browserId = getBrowserId();
 let messageTimer;
+const minimumClipboardHeight = 80;
 
 function getBrowserId() {
   try {
@@ -41,6 +43,30 @@ function updateCharacterCount() {
   characterCount.textContent = `${count} ${count === 1 ? 'character' : 'characters'}`;
 }
 
+function resizeClipboardBy(delta) {
+  clipboardField.style.height = `${Math.max(minimumClipboardHeight, clipboardField.offsetHeight + delta)}px`;
+}
+
+function startClipboardResize(event) {
+  event.preventDefault();
+  const startY = event.clientY;
+  const startHeight = clipboardField.offsetHeight;
+
+  function onPointerMove(moveEvent) {
+    clipboardField.style.height = `${Math.max(minimumClipboardHeight, startHeight + moveEvent.clientY - startY)}px`;
+  }
+
+  function stopResize() {
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', stopResize);
+    document.removeEventListener('pointercancel', stopResize);
+  }
+
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', stopResize);
+  document.addEventListener('pointercancel', stopResize);
+}
+
 function showMessage(message, state = 'normal', duration = 2400) {
   window.clearTimeout(messageTimer);
   actionMessage.textContent = message;
@@ -48,7 +74,7 @@ function showMessage(message, state = 'normal', duration = 2400) {
 
   if (duration > 0) {
     messageTimer = window.setTimeout(() => {
-      actionMessage.textContent = 'Ready';
+      actionMessage.textContent = '';
       actionMessage.dataset.state = 'normal';
     }, duration);
   }
@@ -152,6 +178,12 @@ clipboardField.addEventListener('keydown', (event) => {
     event.preventDefault();
     saveClipboard();
   }
+});
+resizeHandle.addEventListener('pointerdown', startClipboardResize);
+resizeHandle.addEventListener('keydown', (event) => {
+  if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+  event.preventDefault();
+  resizeClipboardBy(event.key === 'ArrowUp' ? -16 : 16);
 });
 copyButton.addEventListener('click', copyClipboard);
 saveButton.addEventListener('click', saveClipboard);

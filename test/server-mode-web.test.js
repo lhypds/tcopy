@@ -25,6 +25,7 @@ test('the public Web UI exposes clipboard controls and server information', () =
   assert.match(html, /id="clipboard"/);
   assert.match(html, /id="copy-button"/);
   assert.match(html, /id="save-button"/);
+  assert.match(html, /id="resize-handle"/);
   assert.match(html, />Status</);
   assert.match(html, />Endpoints</);
   assert.match(script, /Accept: 'text\/plain'/);

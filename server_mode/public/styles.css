@@ -95,10 +95,15 @@ h2 {
   white-space: nowrap;
 }
 
+.clipboard-wrapper {
+  position: relative;
+}
+
 #clipboard {
   display: block;
   width: 100%;
-  min-height: 220px;
+  height: 220px;
+  min-height: 80px;
   padding: 10px;
   resize: none;
   border: 1px solid var(--line);
@@ -115,6 +120,32 @@ h2 {
 
 #clipboard::placeholder {
   color: #9a9a9a;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 1px;
+  bottom: 2px;
+  width: 14px;
+  height: 10px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.resize-handle::before {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 10px;
+  height: 1px;
+  background: #bbbbbb;
+  box-shadow: 0 -4px 0 #bbbbbb, 0 -8px 0 #bbbbbb;
+  content: "";
+}
+
+.resize-handle:focus-visible {
+  outline: 1px solid var(--line);
+  outline-offset: 2px;
 }
 
 .action-row {
@@ -312,17 +343,6 @@ dd code {
   background: var(--soft);
 }
 
-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 30px;
-  padding-top: 4px;
-  color: var(--muted);
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 10px;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -356,10 +376,6 @@ footer {
   .endpoint-list > div {
     grid-template-columns: 1fr;
     gap: 8px;
-  }
-
-  footer {
-    flex-wrap: wrap;
   }
 }
 

@@ -26,13 +26,23 @@
         </div>
 
         <label class="sr-only" for="clipboard">Clipboard content</label>
-        <textarea
-          id="clipboard"
-          name="clipboard"
-          rows="10"
-          placeholder="The server clipboard will appear here."
-          spellcheck="false"
-        ></textarea>
+        <div class="clipboard-wrapper">
+          <textarea
+            id="clipboard"
+            name="clipboard"
+            rows="10"
+            placeholder="The server clipboard will appear here."
+            spellcheck="false"
+          ></textarea>
+          <div
+            id="resize-handle"
+            class="resize-handle"
+            role="separator"
+            aria-label="Resize clipboard field"
+            aria-orientation="horizontal"
+            tabindex="0"
+          ></div>
+        </div>
 
         <div class="action-row">
           <p id="action-message" class="action-message" role="status" aria-live="polite">
@@ -97,11 +107,6 @@
         </dl>
       </section>
 
-      <footer>
-        <span>tcopy server mode</span>
-        <span aria-hidden="true">·</span>
-        <span>Ctrl/⌘ + Enter to save</span>
-      </footer>
     </main>
   </body>
 </html>
