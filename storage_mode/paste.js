@@ -1,8 +1,8 @@
 // Storage mode: read the shared clipboard file, or restore referenced files.
 import fs from 'node:fs';
 import path from 'node:path';
-import { getStoragePaths, resolveHome } from '../src/config.js';
-import { parseFileReferences } from '../src/fileRefs.js';
+import { getStoragePaths, resolveHome } from '../config.js';
+import { parseFileReferences } from '../utils/fileRefs.js';
 import {
   readClipboardFile,
   writeSystemClipboard,

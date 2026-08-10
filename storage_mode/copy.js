@@ -1,8 +1,8 @@
 // Storage mode: write text or file references into the shared clipboard file.
 import fs from 'node:fs';
 import path from 'node:path';
-import { getStoragePaths, resolveHome } from '../src/config.js';
-import { parseFileReferences, formatFileReferences } from '../src/fileRefs.js';
+import { getStoragePaths, resolveHome } from '../config.js';
+import { parseFileReferences, formatFileReferences } from '../utils/fileRefs.js';
 import {
   ensureStorageDir,
   readClipboardFile,

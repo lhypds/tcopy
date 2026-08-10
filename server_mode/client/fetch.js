@@ -1,7 +1,7 @@
 import EventSource from 'eventsource';
 import { clearProgressBar, renderProgressBar } from '../utils/progressUtils.js';
 import { createLogger } from '../utils/logUtils.js';
-import { loadIntoProcessEnv } from '../../src/config.js';
+import { loadIntoProcessEnv } from '../../config.js';
 
 loadIntoProcessEnv('server');
 

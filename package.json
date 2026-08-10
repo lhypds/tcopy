@@ -1,6 +1,6 @@
 {
   "name": "tcopy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Copy and paste from any machine to any machine.",
   "type": "module",
   "author": "gcc³",
@@ -10,14 +10,23 @@
     "url": "git+https://github.com/lhypds/tcopy.git"
   },
   "bin": {
-    "tcopy": "bin/tcopy.js"
+    "tcopy": "bin/tcopy.js",
+    "tpaste": "bin/tpaste.js",
+    "fcopy": "bin/fcopy.js",
+    "fpaste": "bin/fpaste.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=18"
   },
   "files": [
     "bin/",
-    "src/",
+    "utils/",
+    "cli.js",
+    "config.js",
+    "daemon.js",
     "storage_mode/",
     "server_mode/client/",
     "server_mode/server/",

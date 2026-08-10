@@ -7,8 +7,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import chokidar from 'chokidar';
-import { getStoragePaths } from '../src/config.js';
-import { isFileReference } from '../src/fileRefs.js';
+import { getStoragePaths } from '../config.js';
+import { isFileReference } from '../utils/fileRefs.js';
 import { normalizeNewlines, writeSystemClipboard } from './clipboardFile.js';
 
 // Local time, matching the Python version's time.localtime() output.

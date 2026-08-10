@@ -2,8 +2,8 @@
 import { writeSystemClipboard, readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { fetchClipboard, triggerPeerTransfer } from './fetch.js';
 import fs from 'fs';
-import { parseFileReferences } from '../../src/fileRefs.js';
-import { loadIntoProcessEnv } from '../../src/config.js';
+import { parseFileReferences } from '../../utils/fileRefs.js';
+import { loadIntoProcessEnv } from '../../config.js';
 
 loadIntoProcessEnv('server');
 

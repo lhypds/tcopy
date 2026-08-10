@@ -11,7 +11,7 @@ import express from 'express';
 import { fetchClipboard } from './fetch.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 
-import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
+import { loadIntoProcessEnv, stateFile } from '../../config.js';
 
 loadIntoProcessEnv('server');
 

@@ -5,7 +5,7 @@ import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
 import { startSseHeartbeat } from '../utils/sseUtils.js';
-import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
+import { loadIntoProcessEnv, stateFile } from '../../config.js';
 
 loadIntoProcessEnv('server');
 

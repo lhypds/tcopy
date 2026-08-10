@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
+import { loadIntoProcessEnv, stateFile } from '../../config.js';
 
 loadIntoProcessEnv('server');
 

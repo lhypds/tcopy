@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import clipboard from 'clipboardy';
-import { getStoragePaths } from '../src/config.js';
+import { getStoragePaths } from '../config.js';
 
 const LINE_ENDINGS = { CRLF: '\r\n', LF: '\n', CR: '\r' };
 

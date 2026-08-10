@@ -1,6 +1,6 @@
 // Send text to the tcopy server.
 import { readId } from '../utils/idUtils.js';
-import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
+import { loadIntoProcessEnv, stateFile } from '../../config.js';
 
 loadIntoProcessEnv('server');
 

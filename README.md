@@ -17,17 +17,32 @@ Install
 Requirements: Node.js 18 or newer. Nothing else — no Python, no pm2.  
 
 ```
-npm install -g tcopy
+git clone https://github.com/lhypds/tcopy
+cd tcopy
+./install.sh
 ```
 
-This puts a `tcopy` command on your PATH on all three platforms (npm generates
-`tcopy.cmd` and `tcopy.ps1` shims on Windows automatically).  
+This installs the dependencies and puts the four commands — `tcopy`, `tpaste`,
+`fcopy`, `fpaste` — on your PATH.  
+
+On Windows run the two steps directly, there is no shell script involved:  
+
+```
+npm install
+npm link
+```
+
+Either way npm generates `.cmd` and `.ps1` shims on Windows, so the commands
+work the same in cmd, PowerShell and Git Bash.  
 
 Then run the interactive setup:  
 
 ```
 tcopy setup
 ```
+
+To remove it again, run `./uninstall.sh` (or `npm rm -g tcopy` on Windows).
+Your configuration is kept unless you pass `--purge`.  
 
 
 Two Modes
@@ -44,11 +59,11 @@ On server, machine A and B, run `tcopy start` to start `server` and `client`.
 Make sure the SSE and Peer both connected to the server.  
 
 For text copy  
-Machine A use `copy` command to copy text, it will be sent to the server, and then sent to Machine B's clipboard.  
+Machine A use `tcopy` command to copy text, it will be sent to the server, and then sent to Machine B's clipboard.  
 
 For files  
-Machine A use `copy -f <file_path>` command to copy a file, it will be send as file reference to server.  
-On Machine B, if use `paste -f <target_path>` command, it will start a P2P transfering the file from Machine A to Machine B.  
+Machine A use `fcopy <file_path>` command to copy a file, it will be send as file reference to server.  
+On Machine B, if use `fpaste <target_path>` command, it will start a P2P transfering the file from Machine A to Machine B.  
 Server mode supports regular files only. Directories, including macOS `.app` bundles, are not transferred.  
 
 * Storage Mode  
@@ -62,73 +77,83 @@ In storage mode, you can start a watcher to automatically get the clipboard cont
 Use `tcopy start` to start the watcher, and use `tcopy stop` to stop it.  
 
 For text copy  
-Machine A use `copy` command to copy text, it will be sent to the shared storage `.clipboard`, then on Machine B, use `paste` command it will get the text to local clipboard.  
+Machine A use `tcopy` command to copy text, it will be sent to the shared storage `.clipboard`, then on Machine B, use `tpaste` command it will get the text to local clipboard.  
 On Machine B if user started a watcher, it will get the text from the shared storage and copy it to local clipboard.  
 
 For file copy  
-Machine A use `copy -f <file_path>` command to copy a file, it will be copied to the shared storage. And on Machine B, if use `paste -f <target_path>` command, it will copy from the file storage.  
+Machine A use `fcopy <file_path>` command to copy a file, it will be copied to the shared storage. And on Machine B, if use `fpaste <target_path>` command, it will copy from the file storage.  
 
 
 Commands
 --------
 
-Usage: tcopy [copy|paste|clear|reset|update|setup|start|stop|restart|info|-v|--version|-h|--help|\<text\>]  
+There are four commands — `t` is for text, `f` is for files:  
 
-| Command         | Description                                             |
-|-----------------|---------------------------------------------------------|
-| `<text>`        | Copy text or files to server/storage clipboard          |
-| `copy <text>`   | Copy text or files to server/storage clipboard          |
-| `paste`         | Paste text or files from server/storage clipboard       |
-| `clear`         | Clear the clipboard, log files                          |
-| `reset`         | Reset all                                               |
-| `update`        | Update tcopy to the latest version                      |
-| `setup`         | Initial setup                                           |
-| `start`         | Start server/watcher                                    |
-| `stop`          | Stop server/watcher                                     |
-| `restart`       | Restart server/watcher                                  |
-| `info`          | Show information                                        |
-| `-v, --version` | Show version                                            |
-| `-h, --help`    | Show help                                               |
+| Command            | Description                                          |
+|--------------------|------------------------------------------------------|
+| `tcopy [text]`     | Copy text (no argument copies the system clipboard)  |
+| `tpaste`           | Paste text into the system clipboard                 |
+| `fcopy <path>...`  | Copy one or more files                               |
+| `fpaste [dir]`     | Paste stored file(s) into dir (default: current dir) |
 
-* `copy`  
+* `tcopy`  
 
 `tcopy`  
 Copy the current clipboard text to the server or storage's clipboard.  
 
-Text copy  
-`tcopy <text>` or `tcopy copy <text>`  
-Copy the specified text to the clipboard and send it to the server or storage's clipboard.  
+`tcopy <text>`  
+Copy the specified text to the server or storage's clipboard.  
 
-File copy  
-`tcopy -f <file_path>` or `tcopy copy -f <file_path>`  
+* `tpaste`  
+
+`tpaste`  
+Get the current text from the server/storage and copy it to the local clipboard.  
+
+* `fcopy`  
+
+`fcopy <file_path>`  
 For server mode, it will copy the file reference to the server's clipboard file.  
 For storage mode, it will copy the file to the shared storage, and copy the file reference to the shared storage's clipboard file.  
 In server mode, `<file_path>` must be a regular file. Directories such as macOS application bundles are rejected.  
 
-Multiple files copy  
-`tcopy -f <file_path_1> <file_path_2> ...` or `tcopy copy -f <file_path_1> <file_path_2> ...`  
-For server mode, it will copy the file references to the server's clipboard file.  
-For storage mode, it will copy the files to the shared storage, and copy the file references to the shared storage's clipboard file.  
+`fcopy <file_path_1> <file_path_2> ...`  
+Copy multiple files at once.  
 
-* `paste`  
+* `fpaste`  
 
-Text paste  
-`tcopy paste`  
-Get the current text from the server/storage and copy it to the local clipboard.  
+`fpaste`  
+Transfer file(s) from server/storage to the current directory.  
 
-File paste  
-`tcopy paste -f`  
-Transfer file(s) from server/storage to current directory.  
-
-`tcopy paste -f <target_path>`  
+`fpaste <target_path>`  
 Transfer file(s) from server/storage to target path.  
+
+
+Management
+----------
+
+Everything that is not copy/paste lives under `tcopy`:  
+
+| Command         | Description                                             |
+|-----------------|---------------------------------------------------------|
+| `tcopy setup`   | Initial setup                                           |
+| `tcopy start`   | Start server/watcher                                    |
+| `tcopy stop`    | Stop server/watcher                                     |
+| `tcopy restart` | Restart server/watcher                                  |
+| `tcopy info`    | Show information                                        |
+| `tcopy clear`   | Clear the clipboard, log files                          |
+| `tcopy reset`   | Reset all                                               |
+| `tcopy update`  | Update tcopy (`git pull` in the checkout)               |
+| `tcopy -v`      | Show version                                            |
+| `tcopy -h`      | Show help                                               |
+
+`-v`/`--version` and `-h`/`--help` also work on `tpaste`, `fcopy` and `fpaste`.  
 
 
 Configuration
 -------------
 
-Configuration and runtime state live in a per-user directory, not in the install
-folder, so a `npm update` never wipes your settings:  
+Configuration and runtime state live in a per-user directory, not in the
+checkout, so pulling or reinstalling never touches your settings:  
 
 | Platform      | Location                          |
 |---------------|-----------------------------------|
@@ -188,12 +213,27 @@ Use system settings to set up a custom shortcut to execute `tcopy`.
 Development
 -----------
 
+`./install.sh` links the checkout onto your PATH rather than copying it, so
+edits take effect immediately — there is nothing to reinstall after a change.
+For the same reason `tcopy update` just runs `git pull`.  
+
 ```
-git clone https://github.com/lhypds/tcopy
-cd tcopy
-npm install
-npm link          # puts the local checkout on PATH as `tcopy`
+tcopy         # ── bin/tcopy.js
+tpaste        # ── bin/tpaste.js      thin entry points
+fcopy         # ── bin/fcopy.js
+fpaste        # ── bin/fpaste.js
+
+cli.js          command dispatch, shared by all four
+config.js       config directory, .env read/write, 0.0.x migration
+daemon.js       start/stop/status for the background process
+utils/          file-reference parsing, prompts
+storage_mode/   copy, paste and the clipboard-file watcher
+server_mode/    client, server and the PeerJS file transfer
 ```
 
-In a git checkout, `tcopy update` runs `git pull`; otherwise it runs
-`npm install -g tcopy@latest`.  
+Both modes take the same argument shape internally: a bare value is text, a
+leading `-f` means files. `fcopy` and `fpaste` add that flag for you, which is
+why the two modes need no special-casing.  
+
+If you add a command, remember to add it to `bin` in `package.json` — the
+binaries only exist because npm generates shims from that field.  

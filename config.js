@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+export const packageRoot = path.dirname(fileURLToPath(import.meta.url));
 
 function defaultConfigDir() {
   if (process.platform === 'win32') {

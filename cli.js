@@ -20,21 +20,25 @@ import {
   resolveHome,
 } from './config.js';
 import * as daemon from './daemon.js';
-import { askChoice, askText } from './prompt.js';
-import { copy as storageCopy } from '../storage_mode/copy.js';
-import { paste as storagePaste } from '../storage_mode/paste.js';
+import { askChoice, askText } from './utils/prompt.js';
+import { copy as storageCopy } from './storage_mode/copy.js';
+import { paste as storagePaste } from './storage_mode/paste.js';
 
-const VERSION = JSON.parse(
+const MANIFEST = JSON.parse(
   fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8')
-).version;
+);
+const VERSION = MANIFEST.version;
+const PACKAGE_NAME = MANIFEST.name;
 
-const USAGE = `Usage: tcopy <command> [options]
+const USAGE = `Usage: tcopy [text] | tcopy <command>
 
-Commands:
-  copy [text]            Copy text to the shared clipboard (default: system clipboard)
-  copy -f <path>...      Copy one or more files
-  paste                  Paste shared clipboard text into the system clipboard
-  paste -f [dir]         Paste stored file(s) into dir (default: current directory)
+The four commands:
+  tcopy [text]           Copy text (no argument copies the system clipboard)
+  tpaste                 Paste text into the system clipboard
+  fcopy <path>...        Copy one or more files
+  fpaste [dir]           Paste stored file(s) into dir (default: current directory)
+
+Management (via tcopy):
   setup                  Choose the mode and configure it
   start | stop | restart Manage the background process
   info                   Show version, mode and process status
@@ -45,6 +49,13 @@ Commands:
   -h, --help             Show this message
 
 Configuration lives in ${configDir}`;
+
+const SHORT_USAGE = {
+  tpaste: 'Usage: tpaste\n\nPaste text from the shared clipboard into the system clipboard.',
+  fcopy: 'Usage: fcopy <path>...\n\nCopy one or more files to the shared clipboard.',
+  fpaste:
+    'Usage: fpaste [dir]\n\nPaste stored file(s) into dir (default: the current directory).',
+};
 
 // --- helpers ----------------------------------------------------------------
 
@@ -96,20 +107,62 @@ function requireServerClient() {
   return true;
 }
 
-// --- commands ---------------------------------------------------------------
+// --- mode dispatch ----------------------------------------------------------
+// Both modes accept the same argument shape: a bare value copies/pastes text,
+// a leading -f switches to files.
 
-async function cmdCopy(args) {
+async function dispatchCopy(args) {
   const mode = await ensureMode();
   if (mode === 'storage') return storageCopy(args);
   if (!requireServerClient()) return 1;
   return runNodeScript('server_mode/client/copy.js', args);
 }
 
-async function cmdPaste(args) {
+async function dispatchPaste(args) {
   const mode = await ensureMode();
   if (mode === 'storage') return storagePaste(args);
   if (!requireServerClient()) return 1;
   return runNodeScript('server_mode/client/paste.js', args);
+}
+
+// --- commands ---------------------------------------------------------------
+
+/** `tcopy [text]` — copy text. No argument copies the system clipboard. */
+async function cmdCopyText(args) {
+  if (args[0] === '-f' || args[0] === '--file') {
+    console.error("Error: use 'fcopy <path>...' to copy files.");
+    return 1;
+  }
+  return dispatchCopy(args);
+}
+
+/** `tpaste` — paste text into the system clipboard. */
+async function cmdPasteText(args) {
+  if (args[0] === '-f' || args[0] === '--file') {
+    console.error("Error: use 'fpaste [dir]' to paste files.");
+    return 1;
+  }
+  return dispatchPaste([]);
+}
+
+/** `fcopy <path>...` — copy one or more files. */
+async function cmdCopyFile(args) {
+  const paths = args.filter(arg => arg !== '-f' && arg !== '--file');
+  if (paths.length === 0) {
+    console.error('Error: missing file path. Usage: fcopy <path>...');
+    return 1;
+  }
+  return dispatchCopy(['-f', ...paths]);
+}
+
+/** `fpaste [dir]` — restore stored file(s), defaulting to the current directory. */
+async function cmdPasteFile(args) {
+  const targets = args.filter(arg => arg !== '-f' && arg !== '--file');
+  if (targets.length > 1) {
+    console.error('Error: fpaste accepts a single target directory.');
+    return 1;
+  }
+  return dispatchPaste(['-f', targets[0] ?? '.']);
 }
 
 async function cmdSetup() {
@@ -272,7 +325,7 @@ function cmdUpdate() {
   }
 
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const result = spawnSync(npm, ['install', '-g', 'tcopy@latest'], {
+  const result = spawnSync(npm, ['install', '-g', `${PACKAGE_NAME}@latest`], {
     stdio: 'inherit',
     windowsHide: true,
   });
@@ -283,24 +336,68 @@ function cmdUpdate() {
   return result.status ?? 1;
 }
 
-// --- entry point ------------------------------------------------------------
+// --- entry points -----------------------------------------------------------
 
-export async function run(argv) {
+/** Shared start-up: config directory plus one-off migration from the 0.0.x layout. */
+function bootstrap() {
   ensureDirs();
-
   const migrated = migrateLegacyConfig();
   if (migrated.length > 0) {
     console.log(`Migrated existing configuration (${migrated.join(', ')}) to ${configDir}`);
   }
+}
+
+/** Entry point for the tpaste, fcopy and fpaste binaries. */
+export async function runSingle(name, argv) {
+  if (argv[0] === '-h' || argv[0] === '--help') {
+    console.log(SHORT_USAGE[name]);
+    return 0;
+  }
+  if (argv[0] === '-v' || argv[0] === '--version') {
+    console.log(VERSION);
+    return 0;
+  }
+
+  bootstrap();
+
+  switch (name) {
+    case 'tpaste':
+      return cmdPasteText(argv);
+    case 'fcopy':
+      return cmdCopyFile(argv);
+    case 'fpaste':
+      return cmdPasteFile(argv);
+    default:
+      throw new Error(`Unknown command: ${name}`);
+  }
+}
+
+/** Entry point for the tcopy binary. */
+export async function run(argv) {
+  // Answered before bootstrap so that simply asking the version never creates
+  // the config directory or triggers a migration.
+  if (argv[0] === '-v' || argv[0] === '--version') {
+    console.log(VERSION);
+    return 0;
+  }
+  if (argv[0] === '-h' || argv[0] === '--help') {
+    console.log(USAGE);
+    return 0;
+  }
+
+  bootstrap();
 
   const [command, ...rest] = argv;
 
   switch (command) {
     case undefined:
+      return cmdCopyText(rest);
+    // Accepted so that `tcopy copy <text>` does not copy the literal word
+    // "copy", and so old muscle memory keeps working.
     case 'copy':
-      return cmdCopy(rest);
+      return cmdCopyText(rest);
     case 'paste':
-      return cmdPaste(rest);
+      return cmdPasteText(rest);
     case 'setup':
       return cmdSetup();
     case 'start':
@@ -327,12 +424,10 @@ export async function run(argv) {
       return 0;
     case 'install':
     case 'uninstall':
-      console.error(
-        `tcopy is installed with npm now. Use 'npm ${command === 'install' ? 'install' : 'uninstall'} -g tcopy'.`
-      );
+      console.error(`Run ./${command}.sh from the tcopy checkout (${packageRoot}).`);
       return 1;
     default:
       // Anything unrecognised is treated as text to copy, as before.
-      return cmdCopy(argv);
+      return cmdCopyText(argv);
   }
 }
