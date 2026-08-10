@@ -31,6 +31,8 @@ For files
 Machine A use `fcopy <file_path>` command to copy a file, it will be send as file reference to server.  
 On Machine B, if use `fpaste <target_path>` command, it will start a P2P transfering the file from Machine A to Machine B.  
 Server mode supports regular files only. Directories, including macOS `.app` bundles, are not transferred.  
+If the local built-in tcopy client is stopped, `fcopy` or `fpaste` starts it
+automatically before beginning the file operation.
 Relative paths passed to `fcopy` are converted to absolute paths before they
 are published, so the source client can find the file even when its background
 process was started from another directory.

@@ -129,6 +129,47 @@ function requireServerClient() {
   return true;
 }
 
+/** Detect a client managed outside the built-in daemon, such as by PM2. */
+async function hasLocalClientEndpoint() {
+  const port = readEnvValue('server', 'PORT');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 750);
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/`, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) return false;
+
+    const status = await response.json();
+    return Boolean(status?.id && status?.peer && status?.serverBaseUrl);
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** Start the server-mode client when a file transfer needs it. */
+async function ensureFileTransferClientRunning() {
+  const target = daemonFor('server');
+  const current = daemon.status(target.name);
+  if (current.running) return true;
+  if (await hasLocalClientEndpoint()) return true;
+
+  console.log('tcopy client is not running; starting it...');
+  const result = daemon.start(target.name, path.join(packageRoot, target.script));
+  if (!result.started) {
+    console.error('Error: failed to start tcopy client.');
+    return false;
+  }
+
+  console.log(`Started tcopy client (pid ${result.pid}).`);
+  console.log(`Logs: ${daemon.logFile(target.name)}`);
+  return true;
+}
+
 // --- mode dispatch ----------------------------------------------------------
 // Both modes accept the same argument shape: a bare value copies/pastes text,
 // a leading -f switches to files.
@@ -137,6 +178,12 @@ async function dispatchCopy(args) {
   const mode = await ensureMode();
   if (mode === 'storage') return storageCopy(args);
   if (!requireServerClient()) return 1;
+  if (
+    (args[0] === '-f' || args[0] === '--file') &&
+    !(await ensureFileTransferClientRunning())
+  ) {
+    return 1;
+  }
   return runNodeScript('server_mode/client/copy.js', args);
 }
 
@@ -144,6 +191,12 @@ async function dispatchPaste(args) {
   const mode = await ensureMode();
   if (mode === 'storage') return storagePaste(args);
   if (!requireServerClient()) return 1;
+  if (
+    (args[0] === '-f' || args[0] === '--file') &&
+    !(await ensureFileTransferClientRunning())
+  ) {
+    return 1;
+  }
   return runNodeScript('server_mode/client/paste.js', args);
 }
 
