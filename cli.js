@@ -20,7 +20,7 @@ import {
   resolveHome,
 } from './config.js';
 import * as daemon from './daemon.js';
-import { askChoice, askText } from './utils/prompt.js';
+import { askChoice, askText, PromptAbortError } from './utils/prompt.js';
 import { copy as storageCopy } from './storage_mode/copy.js';
 import { paste as storagePaste } from './storage_mode/paste.js';
 
@@ -57,6 +57,18 @@ const SHORT_USAGE = {
     'Usage: fpaste [dir]\n\nPaste stored file(s) into dir (default: the current directory).',
 };
 
+// `server` and `storage` share a first letter, so the shortcut keys are given
+// explicitly — the original bash prompt used s/t for the same reason.
+const MODE_CHOICES = [
+  { value: 'server', key: 's' },
+  { value: 'storage', key: 't' },
+];
+
+const ENVIRONMENT_CHOICES = [
+  { value: 'server', key: 's' },
+  { value: 'client', key: 'c' },
+];
+
 // --- helpers ----------------------------------------------------------------
 
 /** Runs a bundled Node script in the foreground, inheriting the terminal. */
@@ -75,7 +87,7 @@ function runNodeScript(relativePath, args) {
 async function ensureMode() {
   let mode = getMode();
   if (mode !== 'server' && mode !== 'storage') {
-    mode = await askChoice('Choose MODE', ['server', 'storage']);
+    mode = await askChoice('Choose MODE', MODE_CHOICES);
     setMode(mode);
   }
   return mode;
@@ -169,7 +181,7 @@ async function cmdSetup() {
   ensureDirs();
   ensureEnvFile('tcopy');
 
-  const mode = await askChoice('Choose MODE', ['server', 'storage']);
+  const mode = await askChoice('Choose MODE', MODE_CHOICES);
   setMode(mode);
 
   if (mode === 'storage') {
@@ -188,7 +200,7 @@ async function cmdSetup() {
     console.log(`Storage path set to: ${resolved.storagePath}`);
   } else {
     ensureEnvFile('server');
-    const environment = await askChoice('Enter ENVIRONMENT', ['server', 'client']);
+    const environment = await askChoice('Enter ENVIRONMENT', ENVIRONMENT_CHOICES);
     writeEnvValue('server', 'ENVIRONMENT', environment);
 
     if (environment === 'client') {
@@ -349,6 +361,10 @@ function bootstrap() {
 
 /** Entry point for the tpaste, fcopy and fpaste binaries. */
 export async function runSingle(name, argv) {
+  return withPromptGuard(() => runSingleInner(name, argv));
+}
+
+async function runSingleInner(name, argv) {
   if (argv[0] === '-h' || argv[0] === '--help') {
     console.log(SHORT_USAGE[name]);
     return 0;
@@ -374,6 +390,23 @@ export async function runSingle(name, argv) {
 
 /** Entry point for the tcopy binary. */
 export async function run(argv) {
+  return withPromptGuard(() => runInner(argv));
+}
+
+/** Turns an aborted prompt into a plain message and a non-zero exit code. */
+async function withPromptGuard(fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    if (error instanceof PromptAbortError) {
+      console.error(`Error: ${error.message}`);
+      return 1;
+    }
+    throw error;
+  }
+}
+
+async function runInner(argv) {
   // Answered before bootstrap so that simply asking the version never creates
   // the config directory or triggers a migration.
   if (argv[0] === '-v' || argv[0] === '--version') {
