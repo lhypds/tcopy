@@ -1,6 +1,8 @@
 // Copy text (or a file reference) to the tcopy server.
 import { postContent } from './post.js';
 import { readSystemClipboard } from '../utils/clipboardUtils.js';
+import { resolvePath } from '../utils/pathUtils.js';
+import { formatFileReferences } from '../../utils/fileRefs.js';
 import fs from 'fs';
 
 const args = process.argv.slice(2);
@@ -17,7 +19,10 @@ if (args.length === 0) {
     process.exit(1);
   }
 
-  const filePaths = args.slice(1);
+  // The source daemon may have been started from a different directory than
+  // this command. Publish absolute paths so it can still find files that were
+  // supplied to fcopy with a relative path.
+  const filePaths = args.slice(1).map(resolvePath);
 
   for (const filePath of filePaths) {
     if (!fs.existsSync(filePath)) {
@@ -36,7 +41,7 @@ if (args.length === 0) {
   }
 
   console.log('Posting file reference(s) to server...');
-  content = filePaths.map(filePath => `+file[${filePath}]`).join(' ');
+  content = formatFileReferences(filePaths);
 } else {
   // First argument is the text to POST
   console.log('Posting text to server...');
