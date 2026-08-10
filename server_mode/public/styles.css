@@ -4,7 +4,7 @@
   --ink: #111111;
   --muted: #737373;
   --line: #111111;
-  --soft-line: #dedede;
+  --soft-line: var(--line);
   --soft: #f6f6f6;
   --paper: #ffffff;
   --success: #16803a;
@@ -101,7 +101,7 @@ h2 {
   min-height: 220px;
   padding: 10px;
   resize: none;
-  border: 1px solid #cccccc;
+  border: 1px solid var(--line);
   border-radius: 0;
   outline: none;
   background: var(--paper);
@@ -110,7 +110,7 @@ h2 {
 }
 
 #clipboard:focus {
-  border-color: #555555;
+  border-color: var(--line);
 }
 
 #clipboard::placeholder {
