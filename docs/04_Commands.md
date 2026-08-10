@@ -1,6 +1,6 @@
 
-tcopy: Management Commands
-==========================
+Management Commands
+===================
 
 
 Everything that is not copy/paste lives under `tcopy`.  

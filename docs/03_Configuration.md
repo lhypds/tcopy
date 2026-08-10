@@ -1,6 +1,6 @@
 
-tcopy: Configuration
-====================
+Configuration
+=============
 
 
 Configuration and runtime state live in a per-user directory, not in the

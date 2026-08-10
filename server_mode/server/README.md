@@ -1,7 +1,7 @@
 
 
-tcopy: Server Mode `server` Environment
-=======================================
+Server Mode `server` Environment
+================================
 
 
 * Using SSE (Server-Sent Events) to send clipboard data to clients.  

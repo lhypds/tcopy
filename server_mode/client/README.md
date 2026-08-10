@@ -1,6 +1,6 @@
 
-tcopy: Server Mode `client` Environment
-=======================================
+Server Mode `client` Environment
+================================
 
 
 * `client.js` is a SSE client and a PeerJS client, also provide Express server functions.  

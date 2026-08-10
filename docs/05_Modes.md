@@ -1,6 +1,6 @@
 
-tcopy: Two Modes
-================
+Two Modes
+=========
 
 
 `tcopy` can move your clipboard between machines in two different ways. Pick

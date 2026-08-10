@@ -1,6 +1,6 @@
 
-tcopy: Shortcut Setup
-=====================
+Shortcut Setup
+==============
 
 
 Bind a system-wide keyboard shortcut so copying and pasting between machines
