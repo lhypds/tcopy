@@ -1,11 +1,14 @@
 import express from 'express';
 import fs from 'fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { writeId } from '../utils/idUtils.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
 import { startSseHeartbeat } from '../utils/sseUtils.js';
 import { loadIntoProcessEnv, stateFile } from '../../config.js';
+import { acceptsHtml } from './contentNegotiation.js';
 
 loadIntoProcessEnv('server');
 
@@ -16,11 +19,14 @@ const port = process.env.PORT || 5460;
 const clipboardFile = stateFile('server.clipboard');
 const idFile = stateFile('server-id');
 const watchInterval = 300;
+const publicDir = fileURLToPath(new URL('../public/', import.meta.url));
+const webUiFile = path.join(publicDir, 'index.html');
 
 // Express server
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(publicDir, { index: false }));
 
 app.use((req, res, next) => {
   const startTime = Date.now();
@@ -39,34 +45,40 @@ app.use((req, res, next) => {
 app.post('/', (req, res) => {
   const { id, text, timestamp } = req.body || {};
 
-  if (text) {
+  if (typeof text === 'string') {
     // Log the received text input to the console
     log('info', `Received text (id: ${id}, timestamp: ${timestamp}): ${text}`);
 
     fs.writeFile(clipboardFile, `###ID=${id}###` + text, (err) => {
       if (err) {
-        res.status(500).send('Error saving the text');
+        res.status(500).type('text/plain').send('Error saving the text');
       } else {
-        res.send('Text saved: `' + text + '`');
+        res.type('text/plain').send('Text saved: `' + text + '`');
       }
     });
   } else {
-    res.status(400).send('No text input provided.');
+    res.status(400).type('text/plain').send('No text input provided.');
   }
 });
 
 // Get clipboard
 // Route to get the content of the file
 app.get('/', (req, res) => {
+  res.vary('Accept');
+
+  if (acceptsHtml(req.get('Accept'))) {
+    return res.sendFile(webUiFile);
+  }
+
   if (!fs.existsSync(clipboardFile)) {
-    return res.send('');
+    return res.type('text/plain').send('');
   }
 
   fs.readFile(clipboardFile, 'utf8', (err, data) => {
     if (err) {
-      res.status(500).send('Error reading the file');
+      res.status(500).type('text/plain').send('Error reading the file');
     } else {
-      res.send(data || '');
+      res.type('text/plain').send(data || '');
     }
   });
 });

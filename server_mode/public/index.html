@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="View and update the tcopy server clipboard." />
+    <title>tcopy</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <a class="brand" href="/" aria-label="tcopy home">tcopy</a>
+        <p>Copy and paste from any machine to any machine.</p>
+      </header>
+
+      <section class="section" aria-labelledby="clipboard-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Shared text</p>
+            <h1 id="clipboard-heading">Clipboard</h1>
+          </div>
+          <span id="character-count" class="count" aria-live="polite">0 characters</span>
+        </div>
+
+        <label class="sr-only" for="clipboard">Clipboard content</label>
+        <textarea
+          id="clipboard"
+          name="clipboard"
+          rows="10"
+          placeholder="The server clipboard will appear here."
+          spellcheck="false"
+        ></textarea>
+
+        <div class="action-row">
+          <p id="action-message" class="action-message" role="status" aria-live="polite">
+            Loading clipboard…
+          </p>
+          <div class="button-group">
+            <button id="copy-button" class="button" type="button">Copy</button>
+            <button id="save-button" class="button button-primary" type="button">Save</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="status-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Server</p>
+            <h2 id="status-heading">Status</h2>
+          </div>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-item">
+            <span id="connection-dot" class="status-dot" aria-hidden="true"></span>
+            <div>
+              <strong id="connection-status">Connecting</strong>
+              <span id="connection-detail">Opening live updates…</span>
+            </div>
+          </div>
+          <div class="status-item status-item-plain">
+            <span class="status-label">Updated</span>
+            <div>
+              <strong id="updated-status">Not yet</strong>
+              <span>Changes appear here automatically.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section endpoints" aria-labelledby="endpoints-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">HTTP</p>
+            <h2 id="endpoints-heading">Endpoints</h2>
+          </div>
+        </div>
+
+        <dl class="endpoint-list">
+          <div>
+            <dt><span class="method">GET</span><code>/</code></dt>
+            <dd>Clipboard text or this Web UI, selected by the <code>Accept</code> header.</dd>
+          </div>
+          <div>
+            <dt><span class="method method-write">POST</span><code>/</code></dt>
+            <dd>Save clipboard text.</dd>
+          </div>
+          <div>
+            <dt><span class="method">GET</span><code>/sse</code></dt>
+            <dd>Subscribe to live clipboard updates.</dd>
+          </div>
+          <div>
+            <dt><span class="method">GET</span><code>/signal</code></dt>
+            <dd>Connect to the peer signaling server.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <footer>
+        <span>tcopy server mode</span>
+        <span aria-hidden="true">·</span>
+        <span>Ctrl/⌘ + Enter to save</span>
+      </footer>
+    </main>
+  </body>
+</html>

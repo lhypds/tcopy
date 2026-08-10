@@ -106,7 +106,9 @@ export async function fetchClipboard() {
 
   try {
     log('info', `Fetching content from \`${url}\`.`);
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { Accept: 'text/plain' },
+    });
     if (!response.ok) {
       return {
         success: false,

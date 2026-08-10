@@ -17,8 +17,11 @@ or
 Endpoints
 ---------
 
-GET /  
-Get server clipboard content.  
+GET /
+
+Get server clipboard content or the Web UI using HTTP content negotiation.
+`Accept: text/plain` (and the default `*/*`) returns clipboard text.
+`Accept: text/html` returns the browser interface.
 
 POST /  
 Update server clipboard content.  
@@ -28,6 +31,14 @@ Subscribe to server clipboard updates.
 
 GET /signal  
 PeerJS (peer server) signaling endpoint.  
+
+
+Web UI
+------
+
+Open the server URL in a browser, for example `http://localhost:5460/`. The
+page shows live clipboard updates and lets you copy the text to the browser's
+device or edit and save it back to the tcopy server.
 
 
 Log
