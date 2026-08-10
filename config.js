@@ -40,6 +40,7 @@ const DEFAULTS = {
   server: {
     ENVIRONMENT: '',
     PORT: '5460',
+    PM2_NAME: 'tcopy',
     LINE_ENDING_SAVING: 'CR',
     DEBUG: 'false',
     SERVER_BASE_URL: '',
@@ -171,8 +172,10 @@ const LEGACY_SOURCES = [
   { scope: 'storage', file: path.join(packageRoot, 'storage_mode', '.env') },
 ];
 
-// Settings that no longer mean anything after the rewrite.
-const OBSOLETE_KEYS = new Set(['PM2_NAME']);
+// Settings that no longer mean anything after the rewrite. PM2_NAME was here
+// until ecosystem.config.cjs brought it back — it is read from server.env when
+// the server runs under PM2, so a migrating value is worth keeping.
+const OBSOLETE_KEYS = new Set();
 
 export function migrateLegacyConfig() {
   const migrated = [];

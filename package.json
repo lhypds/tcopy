@@ -32,6 +32,7 @@
     "server_mode/server/",
     "server_mode/utils/",
     "server_mode/constants.js",
+    "ecosystem.config.cjs",
     "README.md"
   ],
   "scripts": {

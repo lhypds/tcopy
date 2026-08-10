@@ -50,6 +50,7 @@ Normally you do not edit them by hand — `tcopy setup` writes them for you.
 | `ENVIRONMENT`        | *(unset)* | `server` or `client` — the role of this machine     |
 | `SERVER_BASE_URL`    | *(unset)* | Client only. e.g. `http://localhost:5460`           |
 | `PORT`               | `5460`    | Port the server listens on (the client's local port defaults to 5461) |
+| `PM2_NAME`           | `tcopy`   | Server only. Process name used by `ecosystem.config.cjs` — see [06_PM2.md](06_PM2.md) |
 | `DEBUG`              | `false`   | `true` also writes `debug` level lines to the logs  |
 
 Line endings are not converted in server mode — the text is relayed as-is.
@@ -89,6 +90,10 @@ Upgrading from 0.0.x
 --------------------
 
 The old `.env` files inside the checkout are migrated automatically the first
-time you run any command. `PM2_NAME` is dropped, and a relative `STORAGE_PATH`
-is reset to the default because it used to be relative to `storage_mode/`, a
-directory that no longer exists.  
+time you run any command. A relative `STORAGE_PATH` is reset to the default
+because it used to be relative to `storage_mode/`, a directory that no longer
+exists.  
+
+`PM2_NAME` used to be dropped during this migration, since the rewrite replaced
+pm2 with the built-in daemon. It is carried over again now that
+`ecosystem.config.cjs` reads it — see [06_PM2.md](06_PM2.md).  
