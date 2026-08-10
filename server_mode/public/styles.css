@@ -1,3 +1,5 @@
+@import url(https://cdn.jsdelivr.net/npm/firacode@6.2.0/distr/fira_code.css);
+
 :root {
   --ink: #111111;
   --muted: #737373;
@@ -49,10 +51,10 @@ button {
 
 .brand {
   color: var(--ink);
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: clamp(32px, 8vw, 42px);
-  font-weight: 800;
-  letter-spacing: -2px;
+  font-family: "Fira Code VF", "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(30px, 7vw, 36px);
+  font-weight: 700;
+  letter-spacing: -1.5px;
   line-height: 1;
   text-decoration: none;
 }

@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-# Restart the tcopy background process.
+# Update tcopy, then restart the background process.
 #
-# In server mode, with pm2 installed, this restarts the pm2 process defined by
+# The checkout is fast-forwarded and its dependencies are refreshed first. In
+# server mode, with pm2 installed, this then restarts the pm2 process defined by
 # ecosystem.config.cjs — the relay on the server, the clipboard client on a
 # client — re-reading PM2_NAME, ENVIRONMENT and PORT from server.env. Otherwise
 # it wraps `tcopy restart`, which restarts the built-in daemon.
@@ -10,9 +11,8 @@
 # Usage:
 #   ./restart.sh
 #
-# Nothing is reconfigured; only the background process is stopped and started
-# again. Set TCOPY_NO_PM2=1 to act on the built-in daemon in server mode too.
-# `tcopy info` shows the mode and whether the process is running.
+# Nothing is reconfigured. Set TCOPY_NO_PM2=1 to act on the built-in daemon in
+# server mode too. `tcopy info` shows the mode and process status.
 
 set -euo pipefail
 
@@ -30,6 +30,16 @@ case "${1:-}" in
     exit 1
     ;;
 esac
+
+echo "==> Updating tcopy"
+git pull --ff-only
+
+echo
+echo "==> Updating dependencies"
+npm install
+
+echo
+echo "==> Restarting tcopy"
 
 # Config lives in a per-user directory rather than the checkout — see config.js.
 CONFIG_DIR="${TCOPY_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/tcopy}"
