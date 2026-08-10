@@ -1,12 +1,9 @@
-import dotenv from 'dotenv';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import { clearProgressBar, renderProgressBar } from '../utils/progressUtils.js';
 import { createLogger } from '../utils/logUtils.js';
+import { loadIntoProcessEnv } from '../../src/config.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+loadIntoProcessEnv('server');
 
 // Remote server base URL
 const baseUrl = process.env.SERVER_BASE_URL;

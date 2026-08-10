@@ -1,24 +1,11 @@
 // Fetch remote clipboard content and paste it to the local clipboard.
-import dotenv from 'dotenv';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { writeSystemClipboard, readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { fetchClipboard, triggerPeerTransfer } from './fetch.js';
 import fs from 'fs';
+import { parseFileReferences } from '../../src/fileRefs.js';
+import { loadIntoProcessEnv } from '../../src/config.js';
 
-const FILE_REF_PATTERN = /\+file\[([^\]]+)\]/g;
-const FILE_REF_CONTENT_PATTERN = /^\s*(?:\+file\[[^\]]+\])(?:\s+\+file\[[^\]]+\])*\s*$/;
-
-function parseFileReferences(text) {
-  if (!FILE_REF_CONTENT_PATTERN.test(text)) {
-    return [];
-  }
-
-  return Array.from(text.matchAll(FILE_REF_PATTERN), match => match[1]);
-}
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+loadIntoProcessEnv('server');
 
 const baseUrl = process.env.SERVER_BASE_URL;
 if (!baseUrl) {

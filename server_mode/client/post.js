@@ -1,11 +1,8 @@
 // Send text to the tcopy server.
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
 import { readId } from '../utils/idUtils.js';
+import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+loadIntoProcessEnv('server');
 
 const REQUEST_TIMEOUT_MS = parseFloat(process.env.REQUEST_TIMEOUT_SECONDS ?? '5') * 1000;
 
@@ -22,7 +19,7 @@ export async function postContent(content) {
   console.log(`Sending POST request to \`${url}\`.`);
 
   // Read client id
-  const id = readId(path.join(__dirname, 'id'));
+  const id = readId(stateFile('client-id'));
   const timestamp = String(Math.floor(Date.now() / 1000));
 
   const controller = new AbortController();

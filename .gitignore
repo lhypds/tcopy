@@ -1,9 +1,5 @@
 .env
-.venv
-.clipboard
 node_modules
 .vscode
 .DS_Store
-__pycache__
 *.log
-id

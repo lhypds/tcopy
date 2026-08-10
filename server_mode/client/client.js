@@ -1,9 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import EventSource from 'eventsource';
 import clipboard from 'clipboardy';
-import dotenv from 'dotenv';
 import { readId } from '../utils/idUtils.js';
 import { sleep } from '../utils/sleepUtils.js';
 import { createLogger } from '../utils/logUtils.js';
@@ -13,8 +11,9 @@ import express from 'express';
 import { fetchClipboard } from './fetch.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
+
+loadIntoProcessEnv('server');
 
 import wrtc from "@roamhq/wrtc";
 import { resolvePath } from '../utils/pathUtils.js';
@@ -40,10 +39,10 @@ const peerjsModule = await import("peerjs");
 const peerjs = peerjsModule.default ?? peerjsModule;
 const { Peer } = peerjs;
 
-const id = readId(path.join(__dirname, 'id'));
+const id = readId(stateFile('client-id'));
 
 // Logger
-const log = createLogger('client.log');
+const log = createLogger('client-app.log');
 
 log('info', `Starting tcopy client (id: ${id})...`);
 

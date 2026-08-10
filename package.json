@@ -1,0 +1,41 @@
+{
+  "name": "tcopy",
+  "version": "0.1.0",
+  "description": "Copy and paste from any machine to any machine.",
+  "type": "module",
+  "author": "gcc³",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lhypds/tcopy.git"
+  },
+  "bin": {
+    "tcopy": "bin/tcopy.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "storage_mode/",
+    "server_mode/client/",
+    "server_mode/server/",
+    "server_mode/utils/",
+    "server_mode/constants.js",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@roamhq/wrtc": "^0.10.0",
+    "chokidar": "^4.0.1",
+    "clipboardy": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "eventsource": "^2.0.0",
+    "express": "^4.21.1",
+    "peer": "^1.0.2",
+    "peerjs": "^1.5.5"
+  }
+}

@@ -1,22 +1,20 @@
 import express from 'express';
 import fs from 'fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
 import { writeId } from '../utils/idUtils.js';
 import { readPlainTextClipboard } from '../utils/clipboardUtils.js';
 import { ExpressPeerServer } from 'peer';
 import { createLogger } from '../utils/logUtils.js';
 import { startSseHeartbeat } from '../utils/sseUtils.js';
+import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+loadIntoProcessEnv('server');
 
 // Logger
-const log = createLogger('server.log');
+const log = createLogger('server-app.log');
 
 const port = process.env.PORT || 5460;
-const clipboardFile = '.clipboard';
+const clipboardFile = stateFile('server.clipboard');
+const idFile = stateFile('server-id');
 const watchInterval = 300;
 
 // Express server
@@ -140,7 +138,7 @@ const server = app.listen(port, () => {
   }
 
   // Write the id file
-  writeId('id');
+  writeId(idFile);
 
   // Log server start message
   log('info', `Server is running at \`http://localhost:${port}\`.`);

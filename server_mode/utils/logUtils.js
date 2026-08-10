@@ -1,14 +1,14 @@
 import fs from 'fs';
-
-// Read .env
 import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import { loadIntoProcessEnv, stateFile } from '../../src/config.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+loadIntoProcessEnv('server');
 
 export function createLogger(logFile) {
+  // Bare names land in the per-user state directory; the process CWD is
+  // wherever the user happened to run tcopy from.
+  const resolved = path.isAbsolute(logFile) ? logFile : stateFile(logFile);
+
   return function log(level, msg) {
     if (String(level).toLowerCase() === 'debug' && process.env.DEBUG !== 'true') return;
 
@@ -16,7 +16,7 @@ export function createLogger(logFile) {
     const line = `[${ts}] ${level.toUpperCase().padEnd(7)} ${msg}`;
 
     console.log(line);
-    fs.appendFile(logFile, `${line}\n`, 'utf8', err => {
+    fs.appendFile(resolved, `${line}\n`, 'utf8', err => {
       if (err) console.error(`Failed to write log file: ${err.message}`);
     });
   };
