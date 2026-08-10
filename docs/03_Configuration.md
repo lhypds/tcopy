@@ -50,8 +50,10 @@ Normally you do not edit them by hand — `tcopy setup` writes them for you.
 | `ENVIRONMENT`        | *(unset)* | `server` or `client` — the role of this machine     |
 | `SERVER_BASE_URL`    | *(unset)* | Client only. e.g. `http://localhost:5460`           |
 | `PORT`               | `5460`    | Port the server listens on (the client's local port defaults to 5461) |
-| `LINE_ENDING_SAVING` | `CR`      | `CRLF`, `LF` or `CR`                                |
 | `DEBUG`              | `false`   | `true` also writes `debug` level lines to the logs  |
+
+Line endings are not converted in server mode — the text is relayed as-is.
+`LINE_ENDING_SAVING` only applies to storage mode.  
 
 
 `storage.env`
