@@ -98,7 +98,7 @@ Documentation
 | [Modes](docs/05_Modes.md)                | Server mode vs storage mode, and how text and files move in each |
 | [Commands](docs/04_Commands.md)           | Management commands — `setup`, `start`, `stop`, `restart`, `info`, `clear`, `reset`, `update` |
 | [Configuration](docs/03_Configuration.md) | Every setting, where it is stored, and the runtime state directory |
-| [PM2](docs/06_PM2.md)                     | Running the server under PM2 — `ecosystem.config.cjs` and `PM2_NAME` |
+| [PM2](docs/06_PM2.md)                     | Running the server or client under PM2 — `ecosystem.config.cjs` and `PM2_NAME` |
 | [Clipboard](docs/02_Clipboard.md)         | The `.clipboard` file — where it lives and its format |
 | [Shortcut](docs/01_Shortcut.md)           | Binding a system-wide keyboard shortcut |
 | [Development](docs/10_Development.md)     | Project layout, and working on `tcopy` locally |

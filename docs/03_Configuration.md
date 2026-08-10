@@ -50,7 +50,7 @@ Normally you do not edit them by hand — `tcopy setup` writes them for you.
 | `ENVIRONMENT`        | *(unset)* | `server` or `client` — the role of this machine     |
 | `SERVER_BASE_URL`    | *(unset)* | Client only. e.g. `http://localhost:5460`           |
 | `PORT`               | `5460`    | Port the server listens on (the client's local port defaults to 5461) |
-| `PM2_NAME`           | `tcopy`   | Server only. Process name used by `ecosystem.config.cjs` — see [06_PM2.md](06_PM2.md) |
+| `PM2_NAME`           | `tcopy`   | Process name used by `ecosystem.config.cjs`, for either role — see [06_PM2.md](06_PM2.md) |
 | `DEBUG`              | `false`   | `true` also writes `debug` level lines to the logs  |
 
 Line endings are not converted in server mode — the text is relayed as-is.

@@ -24,9 +24,11 @@ Everything that is not copy/paste lives under `tcopy`.
 `setup`
 -------
 
-Asks for the mode, then for whatever that mode needs — the storage folder, or
-the environment (`server`/`client`) and the server URL. Writes the answers to
-the config directory. Run it again at any time to reconfigure.  
+Asks for the mode, then for whatever that mode needs: the storage folder for
+storage mode, or the environment (`server`/`client`) for server mode — followed
+by the server URL for a client or the port for a server, and then the pm2
+process name for either. Writes the answers to the config directory. Run it
+again at any time to reconfigure.  
 
 
 `start`, `stop`, `restart`

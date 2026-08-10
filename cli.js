@@ -84,6 +84,16 @@ function runNodeScript(relativePath, args) {
   return result.status ?? 1;
 }
 
+/** Prompts until the answer is a usable TCP port, then returns it as a string. */
+async function askPort(question, defaultValue) {
+  for (;;) {
+    const answer = await askText(question, { defaultValue });
+    const port = Number(answer);
+    if (Number.isInteger(port) && port >= 1 && port <= 65535) return String(port);
+    console.log('Enter a port number between 1 and 65535.');
+  }
+}
+
 async function ensureMode() {
   let mode = getMode();
   if (mode !== 'server' && mode !== 'storage') {
@@ -210,7 +220,22 @@ async function cmdSetup() {
         current ? { defaultValue: current } : {}
       );
       writeEnvValue('server', 'SERVER_BASE_URL', baseUrl);
+    } else {
+      const port = await askPort(
+        'Enter PORT (the port the server listens on)',
+        readEnvValue('server', 'PORT')
+      );
+      writeEnvValue('server', 'PORT', port);
     }
+
+    // Asked for both roles: pm2 supervises the client as readily as the server,
+    // and only ecosystem.config.cjs reads it — see docs/06_PM2.md.
+    const pm2Name = await askText(
+      'Enter PM2_NAME (process name if you run tcopy under pm2)',
+      { defaultValue: readEnvValue('server', 'PM2_NAME') }
+    );
+    writeEnvValue('server', 'PM2_NAME', pm2Name);
+
     console.log(`Environment set to: ${environment}`);
   }
 
@@ -277,6 +302,7 @@ async function cmdInfo() {
       console.log(`Server base URL: ${readEnvValue('server', 'SERVER_BASE_URL') || '(not set)'}`);
     }
     console.log(`Port: ${readEnvValue('server', 'PORT')}`);
+    console.log(`PM2 name: ${readEnvValue('server', 'PM2_NAME')}`);
   } else if (mode === 'storage') {
     const { storagePath, clipboardFilePath } = getStoragePaths();
     console.log(`Storage path: ${storagePath}`);

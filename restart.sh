@@ -2,16 +2,16 @@
 #
 # Restart the tcopy background process.
 #
-# On a machine configured as the server, with pm2 installed, this restarts the
-# pm2 process defined by ecosystem.config.cjs, re-reading PM2_NAME and PORT from
-# server.env. Everywhere else it wraps `tcopy restart`, which restarts the
-# built-in daemon — the client, or the storage-mode clipboard watcher.
+# In server mode, with pm2 installed, this restarts the pm2 process defined by
+# ecosystem.config.cjs — the relay on the server, the clipboard client on a
+# client — re-reading PM2_NAME, ENVIRONMENT and PORT from server.env. Otherwise
+# it wraps `tcopy restart`, which restarts the built-in daemon.
 #
 # Usage:
 #   ./restart.sh
 #
 # Nothing is reconfigured; only the background process is stopped and started
-# again. Set TCOPY_NO_PM2=1 to act on the built-in daemon on the server too.
+# again. Set TCOPY_NO_PM2=1 to act on the built-in daemon in server mode too.
 # `tcopy info` shows the mode and whether the process is running.
 
 set -euo pipefail
@@ -39,22 +39,26 @@ read_env() { # read_env <file> <key>
   grep -m1 "^$2=" "$1" 2>/dev/null | cut -d= -f2- | tr -d '\r' || true
 }
 
-# MODE is checked as well as ENVIRONMENT: server.env keeps its old ENVIRONMENT
-# after a switch to storage mode, so ENVIRONMENT alone would restart the relay
-# when the watcher was wanted.
 MODE="$(read_env "$CONFIG_DIR/tcopy.env" MODE)"
 ENVIRONMENT="$(read_env "$CONFIG_DIR/server.env" ENVIRONMENT)"
 PM2_NAME="$(read_env "$CONFIG_DIR/server.env" PM2_NAME)"
 PORT="$(read_env "$CONFIG_DIR/server.env" PORT)"
 
-if [ "$MODE" = "server" ] && [ "$ENVIRONMENT" = "server" ] &&
-   [ -z "${TCOPY_NO_PM2:-}" ] && command -v pm2 >/dev/null 2>&1; then
+# MODE is checked as well as ENVIRONMENT: server.env keeps its old ENVIRONMENT
+# after a switch to storage mode, so ENVIRONMENT alone would restart a
+# server-mode process when the watcher was wanted.
+use_pm2=false
+if [ "$MODE" = "server" ] && [ -z "${TCOPY_NO_PM2:-}" ] && command -v pm2 >/dev/null 2>&1; then
+  case "$ENVIRONMENT" in server|client) use_pm2=true ;; esac
+fi
+
+if [ "$use_pm2" = true ]; then
   # Passing the config file rather than the process name re-evaluates it, so an
-  # edited PORT is picked up; --update-env refreshes the environment with it.
-  # pm2 starts the app if it was not running.
+  # edited PORT or ENVIRONMENT is picked up; --update-env refreshes the
+  # environment with it. pm2 starts the app if it was not running.
   pm2 restart ecosystem.config.cjs --update-env
   echo
-  echo "==> ${PM2_NAME:-tcopy} restarted under pm2 on port ${PORT:-5460}."
+  echo "==> ${PM2_NAME:-tcopy} restarted under pm2 ($ENVIRONMENT, port ${PORT:-5460})."
   echo "    Logs: pm2 logs ${PM2_NAME:-tcopy}"
   exit 0
 fi
