@@ -20,7 +20,7 @@ import {
   resolveHome,
 } from './config.js';
 import * as daemon from './daemon.js';
-import { askChoice, askText, PromptAbortError } from './utils/prompt.js';
+import { askChoice, askText, closePrompts, PromptAbortError } from './utils/prompt.js';
 import { copy as storageCopy } from './storage_mode/copy.js';
 import { paste as storagePaste } from './storage_mode/paste.js';
 
@@ -403,6 +403,9 @@ async function withPromptGuard(fn) {
       return 1;
     }
     throw error;
+  } finally {
+    // Releases stdin; without this an opened prompt keeps the process alive.
+    closePrompts();
   }
 }
 

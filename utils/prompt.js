@@ -5,29 +5,43 @@ import { stdin, stdout } from 'node:process';
 /** Thrown when there is no one to answer — piped input ran out, or no tty. */
 export class PromptAbortError extends Error {}
 
-function ask(question) {
-  const rl = readline.createInterface({ input: stdin, output: stdout });
+// One shared interface for the whole process. A fresh readline per question
+// would work interactively but lose piped input: readline buffers a chunk of
+// stdin, and that buffer dies with the interface, so the second question would
+// see EOF instead of the next line.
+let rl = null;
+let lines = null;
 
-  // rl.question() never settles if stdin reaches EOF, so race it against
-  // 'close'. Without this the process exits on an unsettled await instead of
-  // reporting anything.
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const settle = fn => value => {
-      if (settled) return;
-      settled = true;
-      fn(value);
-    };
+function ensureInterface() {
+  if (rl) return;
+  rl = readline.createInterface({ input: stdin, output: stdout, terminal: stdin.isTTY });
+  // Pull answers from the line iterator rather than rl.question(). question()
+  // never settles once stdin hits EOF, and watching 'close' to compensate is
+  // unreliable: a drained pipe closes while readline still holds buffered
+  // lines, so a later question would be refused with input still pending.
+  lines = rl[Symbol.asyncIterator]();
+}
 
-    rl.on('close', () => {
-      settle(reject)(new PromptAbortError('No input available (stdin closed).'));
-    });
+/**
+ * Releases stdin. Must be called once prompting is done, otherwise the open
+ * interface keeps the event loop alive and the process never exits.
+ */
+export function closePrompts() {
+  if (!rl) return;
+  rl.close();
+  rl = null;
+  lines = null;
+}
 
-    rl.question(question).then(
-      settle(answer => resolve(answer.trim())),
-      settle(reject)
-    );
-  }).finally(() => rl.close());
+async function ask(question) {
+  ensureInterface();
+  stdout.write(question);
+  const next = await lines.next();
+  if (next.done) {
+    stdout.write('\n');
+    throw new PromptAbortError('No input available (stdin closed).');
+  }
+  return String(next.value).trim();
 }
 
 export async function askText(question, { required = true, defaultValue = '' } = {}) {
